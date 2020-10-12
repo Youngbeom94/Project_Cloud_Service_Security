@@ -5,39 +5,44 @@
 //*****************************************************[Initialize the miracl system]************************************************************
 Miracl precision = 100;
 miracl* mip = mirsys(5000, 160); 
+int cnt_i=0,cnt_j=0,cnt_k = 0;
 
 int main()
 {
-	int cnt_i=0,cnt_j=0,cnt_k = 0;
-	char Pt_Client_File[CLIENT_FILE_LEN] = { 0x00,0x00};
-	char Ct_Client_File[CLIENT_FILE_LEN_PADDING] = { 0x00, };
-	char Client_File_key[16] = { 0x00 };
-	char hash_digest[HASH_DIGEST_BYTE] = { 0x00 };
+	_CLIENT_ Client = { 0x00, };
 
+//*****************************************************[STEP 1]***************************************************************
+	printf("\n****************************************[STEP 1]*******************************************************\n\n");
 
-//*****************************************************[STEP 1]************************************************************
-
-	Hash_Function_using_SHA_256(Pt_Client_File, CLIENT_FILE_LEN, hash_digest); //key generation using File
-	Generating_key_using_256_digest(Client_File_key, 16, hash_digest);
+	printf("\n---------------------------------[Client Generating Key using SHA-256]---------------------------------\n");
+	Hash_Function_using_SHA_256((&Client)->Pt_Client_File, CLIENT_FILE_LEN, (&Client)->Client_Tag); //key generation using File
+	Generating_key_using_256_digest((&Client)->Client_File_key, 16, (&Client)->Client_Tag);
 
 
 	//---Check Hash_Function_using_SHA_256
-	printf("\n----------[SHA256 TEST]---------\n");
-	Print_char(hash_digest, HASH_DIGEST_BYTE);
+	printf("\n------------[Hashing File] = ");
+	Print_char((&Client)->Client_Tag, HASH_DIGEST_BYTE);
 	
-	printf("\n----------[KEY used in AES_CBC mode TEST]---------\n");
-	Print_char(Client_File_key, 16);
+	printf("\n------------[Client_Key] = ");
+	Print_char((&Client)->Client_File_key, 16);
 	
 
-	Client_Encryption_using_AES_128_CBC(Pt_Client_File, CLIENT_FILE_LEN, Ct_Client_File, Client_File_key); //Encrypt Clinet File key generated in Hash_Function_using_SHA_256
-	printf("\n----------[AES-128_CBC TEST]---------\n");
-	Print_char(Ct_Client_File, CLIENT_FILE_LEN_PADDING);
+	printf("\n---------------------------------[Client AES-128 CBC mode]---------------------------------\n");
+	Client_Encryption_using_AES_128_CBC((&Client)->Pt_Client_File, CLIENT_FILE_LEN, (&Client)->Ct_Client_File, (&Client)->Client_File_key); //Encrypt Clinet File key generated in Hash_Function_using_SHA_256
+	printf("\n----------[Ecrypted Client_File]---------\n");
+	Print_char((&Client)->Ct_Client_File, CLIENT_FILE_LEN_PADDING);
 
-	Hash_Function_using_SHA_256(Ct_Client_File, CLIENT_FILE_LEN_PADDING, hash_digest);//Tag generation using File encrypted
-	printf("\n----------[Tag of encrypted File TEST]---------\n");
-	Print_char(hash_digest, HASH_DIGEST_BYTE);
+	printf("\n---------------------------------[Client generates Tag of CipherText]---------------------------------\n");
+	Hash_Function_using_SHA_256((&Client)->Ct_Client_File, CLIENT_FILE_LEN_PADDING, (&Client)->Client_Tag);//Tag generation using File encrypted
+
+	printf("\n---------------------------------[Client_Tag]---------------------------------\n");
+	Print_char((&Client)->Client_Tag, HASH_DIGEST_BYTE);
 
 	//*****************************************************[STEP 2]************************************************************
+
+
+
+
 
 
 	big x = mirvar(256256); //initialize n, must have
