@@ -1,6 +1,5 @@
 ﻿  function.cpp
-C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\header.h(6,10): warning C4067: 전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
   main.cpp
-C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\header.h(6,10): warning C4067: 전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
+C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\main.cpp(159,28): warning C4778: 'sprintf' : 서식 문자열 '%'이(가) 종결되지 않았습니다.
   코드를 생성하고 있습니다...
   Project_CloudService.vcxproj -> C:\Users\YoungBeom\source\repos\Project_CloudService\Debug\Project_CloudService.exe
