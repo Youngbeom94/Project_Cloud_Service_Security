@@ -41,7 +41,7 @@ typedef struct __CLIENT_STRUCTURE__ {
 	char Client_File_key[16] = { 0x00 };
 	char Client_Tag[HASH_DIGEST_BYTE] = { 0x00 };
 
-	char t[TIME_LEN] = "20201031";
+	char t[TIME_LEN] = "20201024";
 	char Time_Flag = TRUE; //Time server authentication passed in all cases 
 	char DB_Flag = FALSE; 
 
