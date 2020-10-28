@@ -19,6 +19,15 @@ int main()
 
 
 
+
+
+	//Time Server Initiallize
+
+
+
+	Initialize_Time_Server(&Time_Server);
+
+
 	Client_Read_File(&Client);
 
 	Step_1_Client_generates_k_C_TagC(&Client);
@@ -51,6 +60,43 @@ int main()
 #endif
 
 
+void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
+{
+	int cnt_i = 0;
+	unsigned int year = 0, month = 0, date = 0;
+	FILE* file_pointer;
+	file_pointer = fopen("Time_Server.txt", "w");
+
+	// ************[TIme server]
+	// Time_Server generates Ts = sH(t), using current time
+	struct tm* t;
+	time_t timer;
+
+	//for (cnt_i = 0; cnt_i < 50; cnt_i++)
+	{
+
+		timer = time(NULL) + ((unsigned long long)86400 * (unsigned long long)cnt_i);
+		t = localtime(&timer); // add strcuture using localtime
+		date = t->tm_mday;
+		year = t->tm_year + 1900;
+		month = t->tm_mon + 1;
+
+		fprintf(file_pointer, "%04d%02d%02d : ", year, month, date);
+
+		sprintf((Time_Server)->t, "%04d%02d%02d", year, month, date);
+
+		pfc.hash_and_map((Time_Server)->Ts, (Time_Server)->t); //Ts = H(t) = ht
+		pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
+		(Time_Server)->Ts = pfc.mult((Time_Server)->Ts, (Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
+
+
+		//!G2가 변환이 안돼 그래서 퍼블리싱이 오류가 생기는 중이다.
+		//cout << (Time_Server)->Ts.g << endl;
+	}
+
+
+	fclose(file_pointer);
+}
 
 void Step_1_Client_generates_k_C_TagC(_CLIENT_* Client)
 {
@@ -99,13 +145,14 @@ void Step_3_Client_generates_sd_pairing(_CLIENT_* Client, _SERVER_* Server, _TIM
 
 	G1 P;
 	pfc.random(P); //case 1 : P generation 
+	
 	//pfc.hash_and_map(P, (char*)"Prime for Pairing"); //case 2: P generation 
 
 
 
 	// ************[TIme server]
 	// Time_Server generates Secret_key = s and Public_key = Q = sP
-	pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
+	//pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
 	(Time_Server)->TS_Public_Key = pfc.mult(P, (Time_Server)->TS_Secret_Key); //public key generation Q = sP
 
 	// ************[[Client]
@@ -156,13 +203,10 @@ void Step_4_Server_Verifiy_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _TIME
 	timer = time(NULL);    // get sec of a current time
 	t = localtime(&timer); // add strcuture using localtime
 
-	sprintf((Time_Server)->t, "%04d%02d%02d%", // set
-		t->tm_year + 1900, t->tm_mon + 1, t->tm_mday
-	);
+	sprintf((Time_Server)->t, "%04d%02d%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday	);
 
 	pfc.hash_and_map((Time_Server)->Ts, (Time_Server)->t); //Ts = H(t) = ht
 	(Time_Server)->Ts = pfc.mult((Time_Server)->Ts, (Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
-
 
 
 	// ************[TIme server]
@@ -216,9 +260,46 @@ void Step_4_Server_Verifiy_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _TIME
 
 
 
+
+
+
 //-------------------------------------------------------[T E S T_ Start]-------------------------------------------------------
+
+
+//G1 or G2 -> char
+
+
+//G1 P;
+//Big x, y;
+//big big_x, big_y;
+//pfc.random(P);
+//cout << P.g << endl;
+//
+//char tempx[32] = { 0x00 };
+//char tempy[32] = { 0x00 };
+//P.g.getxy(x, y);
+//big_x = x.getbig();
+//big_y = y.getbig();
+//big_to_bytes(32, big_x, tempx, TRUE);
+//big_to_bytes(32, big_y, tempy, TRUE);
+//
+//Print_char(tempx, 32);
+//Print_char(tempy, 32);
+//
+//x = from_binary(32, tempx);
+//y = from_binary(32, tempy);
+//P.g.set(x, y);
+//cout << P.g << endl;
+
+
+/////////////////////////////////////////////////////
+
+
+
+/
 //G1 P, rP, sP, result_G1;
 //G2 H, sH, result_G2;
+//cout << P.g << endl;
 //GT result_pairing, result_power_pairing;
 //Big r;
 //Big Key;

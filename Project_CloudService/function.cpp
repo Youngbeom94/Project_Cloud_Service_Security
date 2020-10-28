@@ -48,7 +48,7 @@ void Generating_key_using_256_digest(char* src, int src_len, char* digest)
 	}
 }
 
-void XOR_two_char_using_CBC(char* src, char* dst,int len)
+void XOR_two_char_using_CBC(char* src, char* dst, int len)
 {
 	int cnt_i = 0;
 	for (cnt_i = 0; cnt_i < len; cnt_i++)
@@ -57,12 +57,12 @@ void XOR_two_char_using_CBC(char* src, char* dst,int len)
 	}
 }
 
-void Client_Encryption_using_AES_128_CBC(char*src, int src_len ,char*dst, char*key) 
+void Client_Encryption_using_AES_128_CBC(char* src, int src_len, char* dst, char* key)
 {
-	int cnt_i=0, cnt_j = 0;
-	char buff[16] = {0x00};
+	int cnt_i = 0, cnt_j = 0;
+	char buff[16] = { 0x00 };
 	//char IV_vector_CBC[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-	char IV_vector_CBC[16] = { 0x00,};
+	char IV_vector_CBC[16] = { 0x00, };
 	char Padding_src[CLIENT_FILE_LEN_PADDING] = { 0x00 };
 
 	for (cnt_i = 0; cnt_i < CLIENT_FILE_LEN_PADDING; cnt_i++)
@@ -124,7 +124,7 @@ void Client_Encryption_LC_using_AES_128_CBC(char* src, int src_len, char* dst, c
 
 	for (cnt_i = 0; cnt_i < CLIENT_FILE_LEN_PADDING; cnt_i++)
 	{
-			Padding_src[cnt_i] = src[cnt_i];
+		Padding_src[cnt_i] = src[cnt_i];
 	}
 
 	aes a_1 = { {0x00}, };
@@ -181,8 +181,8 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server)
 			{
 				Client->DB_Flag = TRUE;
 				printf("Client_TagC in DB of SerVer\n");
-				Server_add_Client_to_UIDC( Server->DB_UIDC,Client->name,&((Server)->Client_Numeber));
-				
+				Server_add_Client_to_UIDC(Server->DB_UIDC, Client->name, &((Server)->Client_Numeber));
+
 				return;
 			}
 		}
@@ -214,7 +214,7 @@ void Server_LC_Decryption_using_AES_128_CBC(char* src, int src_len, char* dst, c
 	{
 		for (cnt_j = 0; cnt_j < PT_LEN; cnt_j++)
 		{
-			buff[cnt_i][cnt_j] = src[(cnt_i* PT_LEN) + cnt_j];
+			buff[cnt_i][cnt_j] = src[(cnt_i * PT_LEN) + cnt_j];
 		}
 		aes_decrypt(pt_a, buff[cnt_i]);
 	}
@@ -227,7 +227,7 @@ void Server_LC_Decryption_using_AES_128_CBC(char* src, int src_len, char* dst, c
 			XOR_two_char_using_CBC(IV_vector_CBC, buff[0], PT_LEN);
 			break;
 		}
-		XOR_two_char_using_CBC(&src[(cnt_i-2)*PT_LEN],buff[cnt_i-1] , PT_LEN);
+		XOR_two_char_using_CBC(&src[(cnt_i - 2) * PT_LEN], buff[cnt_i - 1], PT_LEN);
 
 	}
 
@@ -244,7 +244,7 @@ void Server_LC_Decryption_using_AES_128_CBC(char* src, int src_len, char* dst, c
 
 void Server_add_Client_to_UIDC(char DB_UIDC[DB_Range][HASH_DIGEST_BYTE], char* Client_Name, char* Clt_num)
 {
-	int cnt_i,cnt_j = 0;
+	int cnt_i, cnt_j = 0;
 	int temp = 0;
 	sha256 psh = { {0x00}, };
 	sha256* pt_psh = &psh;
@@ -260,7 +260,7 @@ void Server_add_Client_to_UIDC(char DB_UIDC[DB_Range][HASH_DIGEST_BYTE], char* C
 
 	for (cnt_i = 0; cnt_i < Client_Name_Len; cnt_i++)
 	{
-		for (cnt_j = 0; cnt_j < HASH_DIGEST_BYTE; cnt_j ++ )
+		for (cnt_j = 0; cnt_j < HASH_DIGEST_BYTE; cnt_j++)
 		{
 			if (DB_UIDC[cnt_i][cnt_j] != 0x00)
 			{
@@ -272,7 +272,7 @@ void Server_add_Client_to_UIDC(char DB_UIDC[DB_Range][HASH_DIGEST_BYTE], char* C
 	}
 	shs256_hash(pt_psh, DB_UIDC[temp]);
 	*Clt_num = temp;
-	
+
 }
 
 void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
@@ -288,11 +288,11 @@ void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
 		}
 
 	}
-		if (*tag_flag == FALSE)
-		{
-		 printf("Server Tag Verification Fail\n");
-		 return;
-		}
+	if (*tag_flag == FALSE)
+	{
+		printf("Server Tag Verification Fail\n");
+		return;
+	}
 
 	*tag_flag = TRUE;
 	printf("Server Tag Verification Success\n");
@@ -305,14 +305,14 @@ void Client_Read_File(_CLIENT_* Client)
 	FILE* file_pointer;
 	file_pointer = fopen("Client_Pt.txt", "r");
 	fgets(from_a_txt, CLIENT_FILE_LEN, file_pointer);
-	
+
 	printf("Current File data: %s \n", from_a_txt);
 
 	Copy_char(Client->Pt_Client_File, from_a_txt, CLIENT_FILE_LEN);
-	
+
 	fclose(file_pointer);
-	
-	
+
+
 }
 
 void Server_Write_File(_SERVER_* Server)
@@ -321,7 +321,7 @@ void Server_Write_File(_SERVER_* Server)
 	FILE* file_pointer;
 	file_pointer = fopen("Server_DB.txt", "w");
 	fputs("[********SERVER DB********]\n", file_pointer);
-	
+
 	fputs("[UIDC]\n", file_pointer);
 	for (cnt_i = 0; cnt_i < HASH_DIGEST_BYTE; cnt_i++)
 	{
@@ -347,5 +347,5 @@ void Server_Write_File(_SERVER_* Server)
 	}
 
 	fclose(file_pointer);
-	
+
 }
