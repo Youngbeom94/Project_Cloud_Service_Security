@@ -7,8 +7,9 @@ Miracl precision = 100;
 miracl* mip = mirsys(5000, 160);
 PFC pfc(AES_SECURITY);  // initialise pairing-friendly curve
 int len = 0x00;
-
 int cnt_i = 0, cnt_j = 0, cnt_k = 0;
+G1 P;
+
 
 //*****************************************************[Start]************************************************************
 int main()
@@ -16,10 +17,7 @@ int main()
 	_CLIENT_ Client = { 0x00, };
 	_SERVER_ Server = { 0x00, };
 	_TIME_SERVER_ Time_Server = { 0x00, };
-
-
-
-
+	pfc.random(P); // P generation 
 
 	//Time Server Initiallize
 
@@ -28,15 +26,15 @@ int main()
 	Client_Read_File(&Client);
 
 	Step_1_Client_generates_k_C_TagC(&Client);
-	
-	Step_2_Client_check_to_Server_TacC(&Client,&Server);
-	
+
+	Step_2_Client_check_to_Server_TacC(&Client, &Server);
+
 
 	Step_3_Client_generates_sd_pairing(&Client, &Server, &Time_Server);
 
 
 	Step_4_Server_Verifiy_Server_TacC(&Client, &Server, &Time_Server);
-	
+
 	printf("\n--[Ecrypted Client_File]\n");
 	Print_char((&Client)->Ct_Client_File, CLIENT_FILE_LEN_PADDING);
 
@@ -59,56 +57,72 @@ int main()
 
 void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
 {
+	/* This Function is Initialize_Time_Server
+	 * 1st:  Generate both Secret_Key (s) and Public_key (Q = sP) of Time_Server
+	 * 2nd:  Generate Ts = sH(t) for each day
+	 * 3rd:  Generates TagC from Encrypted File, using SHA-256
+
+	 * Initialize_Time_Server() outputs Ts = sH(t) to a file for each date. 
+	 * Here, Ts is an element of G2 in pairing operation, so the file is stored for two points G2 = ((x1,y1), (x2,y2)). 
+	 * In this function, there is a process of converting and storing strings.
+	*/
+
 	int cnt_i = 0;
 	unsigned int year = 0, month = 0, date = 0;
-	char point_of_G2[BNCURVE_POINTLEN * 4] = { 0x00 };
+	ZZn2 A, B;
+	Big point1_x, point1_y, point2_x, point2_y;
+	big big_point1_x, big_point1_y, big_point2_x, big_point2_y;
 	FILE* file_pointer;
-	file_pointer = fopen("Time_Server.txt", "w");
-
-	// ************[TIme server]
-	// Time_Server generates Ts = sH(t), using current time
 	struct tm* t;
 	time_t timer;
 
-	for (cnt_i = 10; cnt_i >= 0; cnt_i--)
+	file_pointer = fopen("Time_Server.txt", "w");
+
+	// ************[TIme server]
+	// Generate both Secret_Key (s) and Public_key (Q = sP) of Time_Server
+	pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
+	(Time_Server)->TS_Public_Key = pfc.mult(P, (Time_Server)->TS_Secret_Key); //public key generation Q = sP
+
+	//  Generate Ts = sH(t) for each day
+	
+
+	for (cnt_i = TIME_SERVER_BUFF; cnt_i >= 0; cnt_i--)
 	{
 
-		timer = time(NULL) - ((unsigned long long)86400 * (unsigned long long)cnt_i);
+		timer = time(NULL) - ((unsigned long long)86400 * (unsigned long long)cnt_i); //chose offset of each day
 		t = localtime(&timer); // add strcuture using localtime
-		date = t->tm_mday;
+		date = t->tm_mday; 
 		year = t->tm_year + 1900;
 		month = t->tm_mon + 1;
 
 		sprintf((Time_Server)->t, "%04d%02d%02d", year, month, date); //t set
 		pfc.hash_and_map((Time_Server)->Ts, (Time_Server)->t); //Ts = H(t) = ht
-		pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
 		(Time_Server)->Ts = pfc.mult((Time_Server)->Ts, (Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
 
-
-		int cnt_i = 0x00;
-		ZZn2 A, B;
-		Big x1, y1, x2, y2;
-		big big_x1, big_y1, big_x2, big_y2;
+		//get two point of G2
 		(Time_Server)->Ts.g.get(A, B);
+		A.get(point1_x, point1_y);
+		B.get(point2_x, point2_y);
 
-		A.get(x1, y1);
-		B.get(x2, y2);
+		//convert G2 to big
+		big_point1_x = point1_x.getbig();
+		big_point1_y = point1_y.getbig();
+		big_point2_x = point2_x.getbig();
+		big_point2_y = point2_y.getbig();
 
-		big_x1 = x1.getbig();
-		big_y1 = y1.getbig();
-		big_x2 = x2.getbig();
-		big_y2 = y2.getbig();
-
+		//write to file
 		fprintf(file_pointer, "[%04d%02d%02d]\n", year, month, date);
-		cotnum(big_x1,file_pointer);
-		cotnum(big_y1, file_pointer);
-		cotnum(big_x2, file_pointer);
-		cotnum(big_y2, file_pointer);
+		cotnum(big_point1_x, file_pointer);
+		cotnum(big_point1_y, file_pointer);
+		cotnum(big_point2_x, file_pointer);
+		cotnum(big_point2_y, file_pointer);
 		fputs("\n", file_pointer);
 	}
 
-
 	fclose(file_pointer);
+
+	printf("Time_Server Initialization Complete\n");
+	printf("Time_Server Publishing Ts file\n\n");
 }
 
 
@@ -121,7 +135,6 @@ void Step_1_Client_generates_k_C_TagC(_CLIENT_* Client)
 	 * 3rd:  Generates TagC from Encrypted File, using SHA-256
 	*/
 
-
 	//key generation using File
 	Hash_Function_using_SHA_256((Client)->Pt_Client_File, CLIENT_FILE_LEN, (Client)->Client_Tag);
 	Generating_key_using_256_digest((Client)->Client_File_key, AES_KEY_LEN, (Client)->Client_Tag);
@@ -131,7 +144,6 @@ void Step_1_Client_generates_k_C_TagC(_CLIENT_* Client)
 
 	//Tag generation using File encrypted
 	Hash_Function_using_SHA_256((Client)->Ct_Client_File, CLIENT_FILE_LEN_PADDING, (Client)->Client_Tag);
-
 }
 
 
@@ -149,26 +161,11 @@ void Step_2_Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server)
 void Step_3_Client_generates_sd_pairing(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server)
 {
 	/* This Function is Step 3
-	 * 1st: Time_Server generates Secret_key = s and Public_key = Q = sP
-	 * 2nd: Client generates ht = H(t); t is time (string). if server time is not same on t, then server can't decrypt LC
-	 * 3rd: Client generates R = rP and pairing sd = e(ht,Q)^r
-	 * 4th: Client Generates LC = (rs,C) where rs = hash to AES_Key(sd)
-	 * 5th: Client Delete FIle F from his storage and send t,R, LC, TagC to Server
+	 * 1st: Client generates ht = H(t); t is time (string). if server time is not same on t, then server can't decrypt LC
+	 * 2nd: Client generates R = rP and pairing sd = e(ht,Q)^r
+	 * 3rd: Client Generates LC = (rs,C) where rs = hash to AES_Key(sd)
+	 * 4th: Client Delete FIle F from his storage and send t,R, LC, TagC to Server
 	*/
-
-	//PFC pfc(AES_SECURITY);  // initialise pairing-friendly curve
-
-	G1 P;
-	pfc.random(P); //case 1 : P generation 
-
-	//pfc.hash_and_map(P, (char*)"Prime for Pairing"); //case 2: P generation 
-
-
-
-	// ************[TIme server]
-	// Time_Server generates Secret_key = s and Public_key = Q = sP
-	//pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
-	(Time_Server)->TS_Public_Key = pfc.mult(P, (Time_Server)->TS_Secret_Key); //public key generation Q = sP
 
 	// ************[[Client]
 	// Client generates ht = H(t); t is time(string). if server time is not same on t, then server can't decrypt LC
@@ -202,29 +199,68 @@ void Step_3_Client_generates_sd_pairing(_CLIENT_* Client, _SERVER_* Server, _TIM
 void Step_4_Server_Verifiy_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server)
 {
 	/* This Function is Step 4
-	 * 1st: Time_Server generates Ts = sH(t), using current time
+	 * 1st: Server get Ts = sH(t), from txt file generated by Time_Server
 	 * 2nd: Server operates sd = e(Ts,R) and generates rs for AES, using sd ; proof : sd = e(Ts,R) = e(sH(t),rP) = e(H(t),P)^sr = e(H(t),sP)^r
 	 * 3rd: Server Decrypt C = UnLock (rs,LC), here rs is key of AES
 	 * 4th: Server generates TagC, using C decrypted 3rd
 	 * 5th: if TagC is not in Server. add DB and deletes DBL, else verify TagC
 	*/
 
+	
+	int cnt_i = 0;
+	char current_time[TIME_LEN] = { 0x00 };
+	char time_buff[TIME_LEN] = { 0x00 };
+	ZZn2 G2_P1, G2_P2;
+	Big point1_x = {0x00}, point1_y = { 0x00 }, point2_x = { 0x00 }, point2_y = { 0x00 };
+	big big_point1_x = mirvar(0), big_point1_y = mirvar(0), big_point2_x = mirvar(0), big_point2_y = mirvar(0);
+	FILE* file_pointer;
 
-	// ************[TIme server]
-	// Time_Server generates Ts = sH(t), using current time
 	struct tm* t;
 	time_t timer;
-
-	timer = time(NULL);    // get sec of a current time
+	timer = time(NULL);
 	t = localtime(&timer); // add strcuture using localtime
+	sprintf(current_time, "%04d%02d%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday); 
 
-	sprintf((Time_Server)->t, "%04d%02d%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
+	file_pointer = fopen("Time_Server.txt", "r");
 
-	pfc.hash_and_map((Time_Server)->Ts, (Time_Server)->t); //Ts = H(t) = ht
-	(Time_Server)->Ts = pfc.mult((Time_Server)->Ts, (Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
+	for (cnt_i = 0; cnt_i <= TIME_SERVER_BUFF+10; cnt_i++)
+	{
+		fgetc(file_pointer); //read '['
+		fgets(time_buff, 9, file_pointer); //read "yyyymmdd"
+		fgetc(file_pointer); //read ']'
+		fgetc(file_pointer); //read 'NULL_C'
 
+		mip->IOBASE = 256;
+		mip->INPLEN = BNCURVE_POINTLEN*2;
+		cinnum(big_point1_x, file_pointer); //read 'x of point1'
+		cinnum(big_point1_y, file_pointer); //read 'y of point1'
+		cinnum(big_point2_x, file_pointer); //read 'x of point2'
+		cinnum(big_point2_y, file_pointer); //read 'y of point2'
 
-	// ************[TIme server]
+		fgetc(file_pointer); //read '\n'
+
+		if (char_compare(current_time, time_buff, TIME_LEN) == TRUE)
+		{
+			break; //get current Ts from Time_Server 
+		}
+		else
+		{
+			continue; // if time_buff is not same to current time, then continue loof
+		}
+	}
+	point1_x = Big(big_point1_x);
+	point1_y = Big(big_point1_y);
+	point2_x = Big(big_point2_x);
+	point2_y = Big(big_point2_y);
+
+	G2_P1.set(point1_x, point1_y);
+	G2_P2.set(point2_x, point2_y);
+
+	(Time_Server)->Ts.g.set(G2_P1, G2_P2);
+
+	//cout << (Time_Server)->Ts.g << endl;
+
+	// ************[Server]
 	(Server)->sd = pfc.pairing((Time_Server)->Ts, (Client)->rP); //sd = e(ht,Q) ;here Q = rP
 	(Server)->rs = pfc.hash_to_aes_key((Server)->sd); //rs = hashing(sd)_to AES_KEY
 

@@ -349,3 +349,18 @@ void Server_Write_File(_SERVER_* Server)
 	fclose(file_pointer);
 
 }
+
+int	char_compare(char* src1, char* src2, int len)
+{
+	int cnt_i = 0;
+
+	for (cnt_i = 0; cnt_i<len; cnt_i++)
+	{
+		if (src1[cnt_i] != src2[cnt_i])
+		{
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}

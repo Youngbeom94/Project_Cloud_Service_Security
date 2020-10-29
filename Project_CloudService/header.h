@@ -19,12 +19,13 @@
 
 #define AES_SECURITY 128
 #define AES_KEY_LEN 16
-#define CLIENT_FILE_LEN 300
+#define CLIENT_FILE_LEN 20
 #define CLIENT_FILE_LEN_PADDING ((16-(CLIENT_FILE_LEN%16)) + CLIENT_FILE_LEN)
 #define HASH_DIGEST_BYTE 32
 #define EXTRACT_RANDOMLEN 32
 #define BNCURVE_POINTLEN 32
 #define PT_LEN 16
+#define TIME_SERVER_BUFF 10
 #define TIME_FLAG TRUE
 #define TIME_LEN 9
 
@@ -104,6 +105,7 @@ void Server_add_Client_to_UIDC(char DB_UIDC[DB_Range][HASH_DIGEST_BYTE], char* C
 void Server_LC_Decryption_using_AES_128_CBC(char* src, int src_len, char* dst, char* key);
 void Server_Tag_Verification(char* src1, char* src2,int len ,char* tag_flag);
 void Initialize_Time_Server(_TIME_SERVER_* Time_Server);
+int	char_compare(char* src1, char* src2, int len);
 
 void Step_1_Client_generates_k_C_TagC(_CLIENT_* Client);
 void Step_2_Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server);
