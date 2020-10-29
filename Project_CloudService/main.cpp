@@ -4,11 +4,11 @@
 
 //*****************************************************[Initialize the miracl system]************************************************************
 Miracl precision = 100;
-miracl* mip = mirsys(5000, 160); 
+miracl* mip = mirsys(5000, 160);
 PFC pfc(AES_SECURITY);  // initialise pairing-friendly curve
 int len = 0x00;
 
-int cnt_i=0,cnt_j=0,cnt_k = 0;
+int cnt_i = 0, cnt_j = 0, cnt_k = 0;
 
 //*****************************************************[Start]************************************************************
 int main()
@@ -23,10 +23,7 @@ int main()
 
 	//Time Server Initiallize
 
-
-
 	Initialize_Time_Server(&Time_Server);
-
 
 	Client_Read_File(&Client);
 
@@ -64,6 +61,7 @@ void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
 {
 	int cnt_i = 0;
 	unsigned int year = 0, month = 0, date = 0;
+	char point_of_G2[BNCURVE_POINTLEN * 4] = { 0x00 };
 	FILE* file_pointer;
 	file_pointer = fopen("Time_Server.txt", "w");
 
@@ -72,31 +70,48 @@ void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
 	struct tm* t;
 	time_t timer;
 
-	//for (cnt_i = 0; cnt_i < 50; cnt_i++)
+	for (cnt_i = 10; cnt_i >= 0; cnt_i--)
 	{
 
-		timer = time(NULL) + ((unsigned long long)86400 * (unsigned long long)cnt_i);
+		timer = time(NULL) - ((unsigned long long)86400 * (unsigned long long)cnt_i);
 		t = localtime(&timer); // add strcuture using localtime
 		date = t->tm_mday;
 		year = t->tm_year + 1900;
 		month = t->tm_mon + 1;
 
-		fprintf(file_pointer, "%04d%02d%02d : ", year, month, date);
-
-		sprintf((Time_Server)->t, "%04d%02d%02d", year, month, date);
-
+		sprintf((Time_Server)->t, "%04d%02d%02d", year, month, date); //t set
 		pfc.hash_and_map((Time_Server)->Ts, (Time_Server)->t); //Ts = H(t) = ht
 		pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
 		(Time_Server)->Ts = pfc.mult((Time_Server)->Ts, (Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
 
 
-		//!G2가 변환이 안돼 그래서 퍼블리싱이 오류가 생기는 중이다.
-		//cout << (Time_Server)->Ts.g << endl;
+		int cnt_i = 0x00;
+		ZZn2 A, B;
+		Big x1, y1, x2, y2;
+		big big_x1, big_y1, big_x2, big_y2;
+		(Time_Server)->Ts.g.get(A, B);
+
+		A.get(x1, y1);
+		B.get(x2, y2);
+
+		big_x1 = x1.getbig();
+		big_y1 = y1.getbig();
+		big_x2 = x2.getbig();
+		big_y2 = y2.getbig();
+
+		fprintf(file_pointer, "[%04d%02d%02d]\n", year, month, date);
+		cotnum(big_x1,file_pointer);
+		cotnum(big_y1, file_pointer);
+		cotnum(big_x2, file_pointer);
+		cotnum(big_y2, file_pointer);
+		fputs("\n", file_pointer);
 	}
 
 
 	fclose(file_pointer);
 }
+
+
 
 void Step_1_Client_generates_k_C_TagC(_CLIENT_* Client)
 {
@@ -145,7 +160,7 @@ void Step_3_Client_generates_sd_pairing(_CLIENT_* Client, _SERVER_* Server, _TIM
 
 	G1 P;
 	pfc.random(P); //case 1 : P generation 
-	
+
 	//pfc.hash_and_map(P, (char*)"Prime for Pairing"); //case 2: P generation 
 
 
@@ -182,7 +197,7 @@ void Step_3_Client_generates_sd_pairing(_CLIENT_* Client, _SERVER_* Server, _TIM
 	Copy_char((Server)->DBL_LC_File, (Client)->Ct_LC_File, CLIENT_FILE_LEN_PADDING);
 	Copy_char((Server)->t, (Client)->t, TIME_LEN);
 
-} 
+}
 
 void Step_4_Server_Verifiy_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server)
 {
@@ -203,7 +218,7 @@ void Step_4_Server_Verifiy_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _TIME
 	timer = time(NULL);    // get sec of a current time
 	t = localtime(&timer); // add strcuture using localtime
 
-	sprintf((Time_Server)->t, "%04d%02d%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday	);
+	sprintf((Time_Server)->t, "%04d%02d%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
 
 	pfc.hash_and_map((Time_Server)->Ts, (Time_Server)->t); //Ts = H(t) = ht
 	(Time_Server)->Ts = pfc.mult((Time_Server)->Ts, (Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
@@ -243,200 +258,258 @@ void Step_4_Server_Verifiy_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _TIME
 
 
 # if 0
-//[ 밑은 테스트코드 입니다 ]************************************************************************************************************************************************************************
-
-// Big to binary using len
-//int len2;
-//char test2[100];
-//len2 = to_binary((&Time_Server)->rs, 100, test2, FALSE); //TRUE,FALSE justified with leading zero
-
-//printf("rs = \n");
-//for (cnt_i = 0; cnt_i < 100; cnt_i++)
-//{
-//	printf("%02x", (unsigned char)test2[cnt_i]);
-//}
-
-
-
-
-
-
-
-
-//-------------------------------------------------------[T E S T_ Start]-------------------------------------------------------
-
-
-//G1 or G2 -> char
-
-
-//G1 P;
-//Big x, y;
-//big big_x, big_y;
-//pfc.random(P);
-//cout << P.g << endl;
+//[밑은 테스트코드 입니다] * ***********************************************************************************************************************************************************************
 //
-//char tempx[32] = { 0x00 };
-//char tempy[32] = { 0x00 };
-//P.g.getxy(x, y);
-//big_x = x.getbig();
-//big_y = y.getbig();
-//big_to_bytes(32, big_x, tempx, TRUE);
-//big_to_bytes(32, big_y, tempy, TRUE);
+//	{
+//	big to binary using len
+//		int len2;
+//	char test2[100];
+//	len2 = to_binary((&time_server)->rs, 100, test2, false); //true,false justified with leading zero
 //
-//Print_char(tempx, 32);
-//Print_char(tempy, 32);
+//	printf("rs = \n");
+//	for (cnt_i = 0; cnt_i < 100; cnt_i++)
+//	{
+//		printf("%02x", (unsigned char)test2[cnt_i]);
+//	}
 //
-//x = from_binary(32, tempx);
-//y = from_binary(32, tempy);
-//P.g.set(x, y);
-//cout << P.g << endl;
-
-
-/////////////////////////////////////////////////////
-
-
-
-/
-//G1 P, rP, sP, result_G1;
-//G2 H, sH, result_G2;
-//cout << P.g << endl;
-//GT result_pairing, result_power_pairing;
-//Big r;
-//Big Key;
-
-//pfc.hash_and_map(H, (char*)"My name is Alice");
-//pfc.hash_and_map(P, (char*)"Time Server");
-
-//pfc.random(s);
-//pfc.random(r);
-
-//sH = pfc.mult(H, s);
-//rP = pfc.mult(P, r);
-//result_pairing = pfc.pairing(sH, rP);
-//Key = pfc.hash_to_aes_key(result_pairing);
-//cout << "e (sH,rP) =  " << Key << endl; printf("\n");
-//cout << "e (sH,rP) =  " << pfc.hash_to_aes_key(result_pairing) << endl; printf("\n");
-////--------------------------------------------------------------------------------------------------
-
-//result_pairing = pfc.pairing(H, P);
-//result_power_pairing = pfc.power(result_pairing, r);
-//result_power_pairing = pfc.power(result_power_pairing, s);
-//cout << "e (H,P)^s*r = " << pfc.hash_to_aes_key(result_power_pairing) << endl; printf("\n");
-////--------------------------------------------------------------------------------------------------  
-
-
-//sP = pfc.mult(P, s);
-//result_pairing = pfc.pairing(H, sP);
-//result_power_pairing = pfc.power(result_pairing, r);
-//cout << "e (H,sP)^r = " << pfc.hash_to_aes_key(result_power_pairing) << endl; printf("\n");
-//--------------------------------------------------------------------------------------------------
-
-
-
-//-------------------------------------------------------[T E S T_ End]-------------------------------------------------------
-
-
-	//big x = mirvar(256256); //initialize n, must have
-	//big y = mirvar(1); //initialize n, must have
-	//big z = mirvar(0);
-
-	////cotnum(n, stdin);
-	//cotnum(x, stdout);
-	//cotnum(y, stdout);
-
-	//add(x, y, z);
-	//cotnum(z,stdout);
-
-
-
-
-	//time_t seed;
-	//G1 Alice, Bob, sA, sB;
-	//G2 B6, Server, sS;
-	//GT res, sp, ap, bp;
-	//Big ss, s, a, b;
-	
-
-	//time(&seed);
-	//irand((long)seed);
-
-
-	//! ------------------------------------------------------[ AES TEST ]--------------------------------------------
-	//char Mr_AES_Key_128bit[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-	//char buff[PT_LEN] = {0x00,0x00};
-	//char IV_vector_CBC[16] = {0x00};
-
-	//aes a_1 = { {0x00}, };
-	//aes* pt_a = &a_1;
-	//
-	////! AES init
-	//printf("\n----------[AES128 TEST]---------\n");
-	//aes_init(pt_a, MR_CBC, 16, Mr_AES_Key_128bit, IV_vector_CBC);
-	//Print_char(buff, PT_LEN);
-
-
-	////! AES encrypt
-	//aes_encrypt(pt_a, buff);
-	//Print_char(buff, PT_LEN);
-
-
-	////! AES decrypt
-	//aes_decrypt(pt_a, buff);
-	//Print_char(buff, PT_LEN);
-
-	//aes_end(pt_a);
-
-	//! ------------------------------------------------------[ SHA TEST ]--------------------------------------------
-
-	//sha256 psh = { {0x00}, };
-
-	//sha256* pt_psh = &psh;
-
-	//char hash[HASH_LEN] = {0x00};
-	//char test[] = "Crypto Optimization and Application Lab Avengers";
-
-	////! SHA init
-	//shs256_init(pt_psh);
-
-	//for (cnt_i = 0; test[cnt_i] != 0; cnt_i++)
-	//{
-	//	shs256_process(pt_psh, test[cnt_i]);
-	//}
-	////!
-	//shs256_hash(pt_psh, hash);
-
-	//printf("\n----------[SHA256 TEST]---------\n");
-	//Print_char(hash, HASH_LEN);
-
-
-
-	//! ------------------------------------------------------[ Strong DRBG TEST ]-------------------------------------------
 //
-//	//time_t seed = 0x00;
-//	csprng rng = { {0x00}, };
+//
+//
+//
+//
+//
+//
+//	------------------------------------------------------ - [t e s t_ start]------------------------------------------------------ -
+//
+//************************************************************[G1 -> char]*****************************************************************************
+//
+//
+//	G1 p;
+//	big x, y;
+//	big big_x, big_y;
+//	pfc.random(p);
+//	cout << p.g << endl;
+//
+//	char tempx[32] = { 0x00 };
+//	char tempy[32] = { 0x00 };
+//	p.g.getxy(x, y);
+//	big_x = x.getbig();
+//	big_y = y.getbig();
+//	big_to_bytes(32, big_x, tempx, true);
+//	big_to_bytes(32, big_y, tempy, true);
+//
+//	print_char(tempx, 32);
+//	print_char(tempy, 32);
+//
+//	x = from_binary(32, tempx);
+//	y = from_binary(32, tempy);
+//	p.g.set(x, y);
+//	cout << p.g << endl;
+//
+//
+//	************************************************************[G2->char] * ****************************************************************************
+//
+//		G2 P;
+//	pfc.random(P); //secret key generation
+//	cout << P.g << endl;
+//
+//	ZZn2 A, B;
+//	Big x1, y1, x2, y2;
+//	big big_x1, big_y1, big_x2, big_y2;
+//	char tempx1[32] = { 0x00 };
+//	char tempy1[32] = { 0x00 };
+//
+//	char tempx2[32] = { 0x00 };
+//	char tempy2[32] = { 0x00 };
+//
+//	P.g.get(A, B);
+//
+//	A.get(x1, y1);
+//
+//	B.get(x2, y2);
+//
+//	cout << A << endl;
+//	cout << B << endl;
+//
+//	big_x1 = x1.getbig();
+//	big_y1 = y1.getbig();
+//
+//	big_x2 = x2.getbig();
+//	big_y2 = y2.getbig();
+//
+//	big_to_bytes(32, big_x1, tempx1, TRUE);
+//	big_to_bytes(32, big_y1, tempy1, TRUE);
+//
+//
+//	big_to_bytes(32, big_x2, tempx2, TRUE);
+//	big_to_bytes(32, big_y2, tempy2, TRUE);
+//
+//	Print_char(tempx1, 32);
+//	Print_char(tempy1, 32);
+//
+//	Print_char(tempx2, 32);
+//	Print_char(tempy2, 32);
+//
+//
+//	ZZn2 C, D;
+//	Big x11, y11, x22, y22;
+//	big big_x11, big_y11, big_x22, big_y22;
+//	G2 Q;
+//
+//
+//	x11 = from_binary(32, tempx1);
+//	y11 = from_binary(32, tempy1);
+//	x22 = from_binary(32, tempx2);
+//	y22 = from_binary(32, tempy2);
+//
+//	C.set(x11, y11);
+//	D.set(x22, y22);
+//
+//	Q.g.set(C, D);
+//
+//	cout << Q.g << endl;
+//
+//	************************************************************[Printf] * ****************************************************************************
+//	g1 p, rp, sp, result_g1;
+//	g2 h, sh, result_g2;
+//	cout << p.g << endl;
+//	gt result_pairing, result_power_pairing;
+//	big r;
+//	big key;
+//
+//	pfc.hash_and_map(h, (char*)"my name is alice");
+//	pfc.hash_and_map(p, (char*)"time server");
+//
+//	pfc.random(s);
+//	pfc.random(r);
+//
+//	sh = pfc.mult(h, s);
+//	rp = pfc.mult(p, r);
+//	result_pairing = pfc.pairing(sh, rp);
+//	key = pfc.hash_to_aes_key(result_pairing);
+//	cout << "e (sh,rp) =  " << key << endl; printf("\n");
+//	cout << "e (sh,rp) =  " << pfc.hash_to_aes_key(result_pairing) << endl; printf("\n");
+//	//--------------------------------------------------------------------------------------------------
+//
+//	result_pairing = pfc.pairing(h, p);
+//	result_power_pairing = pfc.power(result_pairing, r);
+//	result_power_pairing = pfc.power(result_power_pairing, s);
+//	cout << "e (h,p)^s*r = " << pfc.hash_to_aes_key(result_power_pairing) << endl; printf("\n");
+//	//--------------------------------------------------------------------------------------------------  
+//
+//
+//	sp = pfc.mult(p, s);
+//	result_pairing = pfc.pairing(h, sp);
+//	result_power_pairing = pfc.power(result_pairing, r);
+//	cout << "e (h,sp)^r = " << pfc.hash_to_aes_key(result_power_pairing) << endl; printf("\n");
+//	--------------------------------------------------------------------------------------------------
+//
+//
+//
+//		------------------------------------------------------ - [t e s t_ end]------------------------------------------------------ -
+//
+//
+//	big x = mirvar(256256); //initialize n, must have
+//	big y = mirvar(1); //initialize n, must have
+//	big z = mirvar(0);
+//
+//	//cotnum(n, stdin);
+//	cotnum(x, stdout);
+//	cotnum(y, stdout);
+//
+//	add(x, y, z);
+//	cotnum(z, stdout);
+//
+//
+//
+//
+//	time_t seed;
+//	g1 alice, bob, sa, sb;
+//	g2 b6, server, ss;
+//	gt res, sp, ap, bp;
+//	big ss, s, a, b;
+//
+//
+//	time(&seed);
+//	irand((long)seed);
+//
+//
+//	!------------------------------------------------------[aes test]--------------------------------------------
+//		char mr_aes_key_128bit[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+//	char buff[pt_len] = { 0x00,0x00 };
+//	char iv_vector_cbc[16] = { 0x00 };
+//
+//	aes a_1 = { {0x00}, };
+//	aes* pt_a = &a_1;
+//
+//	//! aes init
+//	printf("\n----------[aes128 test]---------\n");
+//	aes_init(pt_a, mr_cbc, 16, mr_aes_key_128bit, iv_vector_cbc);
+//	print_char(buff, pt_len);
+//
+//
+//	//! aes encrypt
+//	aes_encrypt(pt_a, buff);
+//	print_char(buff, pt_len);
+//
+//
+//	//! aes decrypt
+//	aes_decrypt(pt_a, buff);
+//	print_char(buff, pt_len);
+//
+//	aes_end(pt_a);
+//
+//	!------------------------------------------------------[sha test]--------------------------------------------
+//
+//		sha256 psh = { {0x00}, };
+//
+//	sha256* pt_psh = &psh;
+//
+//	char hash[hash_len] = { 0x00 };
+//	char test[] = "crypto optimization and application lab avengers";
+//
+//	//! sha init
+//	shs256_init(pt_psh);
+//
+//	for (cnt_i = 0; test[cnt_i] != 0; cnt_i++)
+//	{
+//		shs256_process(pt_psh, test[cnt_i]);
+//	}
+//	//!
+//	shs256_hash(pt_psh, hash);
+//
+//	printf("\n----------[sha256 test]---------\n");
+//	print_char(hash, hash_len);
+//
+//
+//
+//	!------------------------------------------------------[strong drbg test]------------------------------------------ -
+//
+//		//time_t seed = 0x00;
+//		csprng rng = { {0x00}, };
 //	csprng* pt_rng = &rng;
-//	char random_byte[EXTRACT_RANDOMLEN] = { 0x00 };
+//	char random_byte[extract_randomlen] = { 0x00 };
 //
 //	/*char raw[256] = {0x00};
-//	printf("Enter Raw random string= ");
+//	printf("enter raw random string= ");
 //	scanf("%s", raw);
 //	getchar();*/
 //
-//	char raw[256] = {0x00};
+//	char raw[256] = { 0x00 };
 //	//time(&seed);
 //	seed = 0x1233223;
 //	strong_init(pt_rng, strlen(raw), raw, (long)seed);
 //
-//	for (cnt_i = 0; cnt_i < EXTRACT_RANDOMLEN; cnt_i++)
+//	for (cnt_i = 0; cnt_i < extract_randomlen; cnt_i++)
 //	{
-//		random_byte[cnt_i] = (unsigned char) strong_rng(pt_rng);
+//		random_byte[cnt_i] = (unsigned char)strong_rng(pt_rng);
 //	}
 //
 //
-//	printf("\n----------[Strong Random Generater TEST]---------\n");
-//	Print_char(random_byte, EXTRACT_RANDOMLEN);
+//	printf("\n----------[strong random generater test]---------\n");
+//	print_char(random_byte, extract_randomlen);
 //
 //
 //	/*system("pause");*/
-
+//}
 #endif
