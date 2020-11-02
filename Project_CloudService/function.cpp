@@ -26,6 +26,7 @@ void Hash_Function_using_SHA_256(char* src, int src_len, char* digest)
 	int cnt_i;
 	sha256 psh = { {0x00}, };
 	sha256* pt_psh = &psh;
+
 	//! SHA init
 	shs256_init(pt_psh);
 
@@ -180,16 +181,16 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server)
 			if (cnt_j == (HASH_DIGEST_BYTE - 1))
 			{
 				Client->DB_Flag = TRUE;
-				printf("Client_TagC in DB of SerVer\n");
+				printf("Client_TagC in DB of SerVer\n\n");
 				Server_add_Client_to_UIDC(Server->DB_UIDC, Client->name, &((Server)->Client_Numeber));
-
 				return;
 			}
 		}
 	}
-	printf("Client_TagC is not in DB of SerVer\n");
 	Client->DB_Flag = FALSE;
 	Server->Client_Numeber = 0;
+
+	printf("Client receive N/A of TagC from Server\n\n");
 
 }
 
@@ -290,12 +291,12 @@ void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
 	}
 	if (*tag_flag == FALSE)
 	{
-		printf("Server Tag Verification Fail\n");
+		printf("------Server Tag Verification Fail------\n\n");
 		return;
 	}
 
 	*tag_flag = TRUE;
-	printf("Server Tag Verification Success\n");
+	printf("------Server Tag Verification Success------\n\n");
 
 }
 
@@ -306,7 +307,7 @@ void Client_Read_File(_CLIENT_* Client)
 	file_pointer = fopen("Client_Pt.txt", "r");
 	fgets(from_a_txt, CLIENT_FILE_LEN, file_pointer);
 
-	printf("Current File data: %s \n", from_a_txt);
+	//printf("Current File data: %s \n", from_a_txt);
 
 	Copy_char(Client->Pt_Client_File, from_a_txt, CLIENT_FILE_LEN);
 
@@ -335,12 +336,6 @@ void Server_Write_File(_SERVER_* Server)
 	}
 
 	fputs("\n[Encrypted Client File]\n", file_pointer);
-	for (cnt_i = 0; cnt_i < CLIENT_FILE_LEN_PADDING; cnt_i++)
-	{
-		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_Ct_Client_File[cnt_i]);
-	}
-
-	fputs("\n[Access time]\n", file_pointer);
 	for (cnt_i = 0; cnt_i < CLIENT_FILE_LEN_PADDING; cnt_i++)
 	{
 		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_Ct_Client_File[cnt_i]);

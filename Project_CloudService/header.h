@@ -11,15 +11,13 @@
 #include "big.h"
 #include "ecn.h"
 
-
 #define MR_PAIRING_BN    // AES-128 or AES-192 security
 #include "pairing_3.h"
 
 
-
 #define AES_SECURITY 128
 #define AES_KEY_LEN 16
-#define CLIENT_FILE_LEN 20
+#define CLIENT_FILE_LEN 40
 #define CLIENT_FILE_LEN_PADDING ((16-(CLIENT_FILE_LEN%16)) + CLIENT_FILE_LEN)
 #define HASH_DIGEST_BYTE 32
 #define EXTRACT_RANDOMLEN 32
@@ -43,9 +41,9 @@ typedef struct __CLIENT_STRUCTURE__ {
 	char Client_File_key[16] = { 0x00 };
 	char Client_Tag[HASH_DIGEST_BYTE] = { 0x00 };
 
-	char t[TIME_LEN] = "20201029";
+	char t[TIME_LEN] = "20201102";
 	char Time_Flag = TRUE; //Time server authentication passed in all cases 
-	char DB_Flag = FALSE; 
+	char DB_Flag = -1; 
 
 	G1 rP; //R = rP
 	G2 ht;
@@ -112,3 +110,8 @@ void Step_2_Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server);
 void Step_3_Client_generates_sd_pairing(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
 void Step_4_Server_Verifiy_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
 
+
+void Client_generates_K_C_TagC(_CLIENT_* Client);
+void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server);
+void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
+void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
