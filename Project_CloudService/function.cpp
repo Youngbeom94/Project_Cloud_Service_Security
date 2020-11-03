@@ -39,7 +39,7 @@ void Hash_Function_using_SHA_256(char* src, int src_len, char* digest)
 	//char test[] = "Crypto Optimization and Application Lab Avengers"; 
 }
 
-void Generating_key_using_256_digest(char* src, int src_len, char* digest)
+void Generating_key_using_fixed_digest(char* src, int src_len, char* digest)
 {
 	int cnt_i = 0;
 
@@ -57,7 +57,110 @@ void XOR_two_char_using_CBC(char* src, char* dst, int len)
 		dst[cnt_i] ^= src[cnt_i];
 	}
 }
+void Client_Encrypte_File(char* dst, char* src, char* key,int len, int Crypto_Flag)
+{
+	switch (Crypto_Flag)
+	{
+	case AES:
+		Client_Encryption_using_AES_128_CBC(src, len, dst, key);
+		printf("Client Choose AES-128bit block cipher to encrypt\n");
+		break;
 
+	case LEA:
+		break;
+
+	case SEED:
+		break;
+
+	default:
+		printf("Encrypt File Error\n");
+	}
+}
+
+void Client_Encrypte_C_to_LC(char* dst, char* src, char* key, int len, int Crypto_Flag)
+{
+	switch (Crypto_Flag)
+	{
+	case AES:
+		Client_Encryption_LC_using_AES_128_CBC(src, len, dst, key);
+		printf("Client Choose AES-128bit block cipher to encrypt\n");
+		break;
+
+	case LEA:
+		break;
+
+	case SEED:
+		break;
+
+	case XOR_based:
+		break;
+
+	default:
+		printf("Encrypt File Error\n");
+	}
+}
+
+void Client_Hashing_File(char* dst, char* src, int len,int Hashing_Flag)
+{
+	switch (Hashing_Flag)
+	{
+	case SHA_256:
+		Hash_Function_using_SHA_256(src, len, dst);
+		printf("Client Choose SHA-256 to Hashing\n");
+		break;
+
+	case SHA_512:
+		break;
+
+	case SHA_3:
+		break;
+
+	default:
+		printf("Encrypt File Error\n");
+	}
+}
+
+void Server_Hashing_File_to_Tag(char* dst, char* src, int len, int Hashing_Flag)
+{
+	switch (Hashing_Flag)
+	{
+	case SHA_256:
+		Hash_Function_using_SHA_256(src, len, dst);
+		break;
+
+	case SHA_512:
+		break;
+
+	case SHA_3:
+		break;
+
+	default:
+		printf("Encrypt File Error\n");
+	}
+}
+
+void Server_Decrypt_LC_to_C(char* dst, char* src, char* key, int len, int Crypto_Flag)
+{
+	switch (Crypto_Flag)
+	{
+	case AES:
+		Server_LC_Decryption_using_AES_128_CBC(src, len,dst, key);
+		break;
+
+	case LEA:
+		break;
+
+	case SEED:
+		break;
+
+	case XOR_based:
+		break;
+
+	default:
+		printf("Encrypt File Error\n");
+	}
+
+}
 void Client_Encryption_using_AES_128_CBC(char* src, int src_len, char* dst, char* key)
 {
 	int cnt_i = 0, cnt_j = 0;
@@ -349,7 +452,7 @@ int	char_compare(char* src1, char* src2, int len)
 {
 	int cnt_i = 0;
 
-	for (cnt_i = 0; cnt_i<len; cnt_i++)
+	for (cnt_i = 0; cnt_i < len; cnt_i++)
 	{
 		if (src1[cnt_i] != src2[cnt_i])
 		{

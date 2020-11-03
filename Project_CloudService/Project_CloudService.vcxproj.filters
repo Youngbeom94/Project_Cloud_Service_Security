@@ -29,9 +29,6 @@
     <Library Include="..\..\Miracl_StaticLib1\Debug\miracl.lib" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Miracl_StaticLib1\Debug\miracl.pdb" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>

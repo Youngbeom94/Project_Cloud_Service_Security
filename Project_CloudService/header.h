@@ -24,13 +24,22 @@
 #define BNCURVE_POINTLEN 32
 #define PT_LEN 16
 #define TIME_SERVER_BUFF 10
-#define TIME_FLAG TRUE
 #define TIME_LEN 9
 
 #define Client_Name_Len 20
 #define DB_Range 10
 #define TRUE 1
 #define FALSE 0
+
+#define AES 1
+#define LEA 2
+#define SEED 3
+#define XOR_based 4
+
+#define SHA_256 1
+#define SHA_512 2 
+#define SHA_3	3
+
 
 
 typedef struct __CLIENT_STRUCTURE__ {
@@ -41,9 +50,12 @@ typedef struct __CLIENT_STRUCTURE__ {
 	char Client_File_key[16] = { 0x00 };
 	char Client_Tag[HASH_DIGEST_BYTE] = { 0x00 };
 
-	char t[TIME_LEN] = "20201102";
+	char t[TIME_LEN] = "20201103";
 	char Time_Flag = TRUE; //Time server authentication passed in all cases 
 	char DB_Flag = -1; 
+	int Crypto_Flag = -1;
+	int Hashing_Flag = -1;
+
 
 	G1 rP; //R = rP
 	G2 ht;
@@ -70,6 +82,8 @@ typedef struct __SERVER_STRUCTURE__ {
 	char Flag = TRUE; //Time server authentication passed in all cases 
 	char rs_key[AES_KEY_LEN] = { 0x00 };
 	char Tag_Flag = -1;
+	int Crypto_Flag = -1;
+	int Hashing_Flag = -1;
 
 	GT sd;
 	Big rs;
@@ -94,22 +108,21 @@ void Server_Write_File(_SERVER_* Server);
 void Print_char(char* src, int len);
 void Copy_char(char* dst, char* src, int len);
 void Hash_Function_using_SHA_256(char* src, int src_len, char* digest);
-void Generating_key_using_256_digest(char* dst, int src_len, char* digest);
+void Generating_key_using_fixed_digest(char* dst, int src_len, char* digest);
 void XOR_two_char_using_CBC(char* src, char* dst, int len);
+void Client_Encrypte_File(char* dst, char* src, char* key, int len, int Crypto_Flag);
+void Client_Encrypte_C_to_LC(char* dst, char* src, char* key, int len, int Crypto_Flag);
+void Client_Hashing_File(char* dst, char* src, int len, int Hashing_Flag);
 void Client_Encryption_using_AES_128_CBC(char* src, int src_len, char* dst, char* key);
 void Client_Encryption_LC_using_AES_128_CBC(char* src, int src_len, char* dst, char* key);
 void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server);
+void Server_Hashing_File_to_Tag(char* dst, char* src, int len, int Hashing_Flag);
+void Server_Decrypt_LC_to_C(char* dst, char* src, char* key, int len, int Crypto_Flag);
 void Server_add_Client_to_UIDC(char DB_UIDC[DB_Range][HASH_DIGEST_BYTE], char* Client_Name, char* Clt_num);
 void Server_LC_Decryption_using_AES_128_CBC(char* src, int src_len, char* dst, char* key);
 void Server_Tag_Verification(char* src1, char* src2,int len ,char* tag_flag);
 void Initialize_Time_Server(_TIME_SERVER_* Time_Server);
 int	char_compare(char* src1, char* src2, int len);
-
-void Step_1_Client_generates_k_C_TagC(_CLIENT_* Client);
-void Step_2_Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server);
-void Step_3_Client_generates_sd_pairing(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
-void Step_4_Server_Verifiy_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
-
 
 void Client_generates_K_C_TagC(_CLIENT_* Client);
 void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server);

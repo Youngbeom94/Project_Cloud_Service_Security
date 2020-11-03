@@ -169,9 +169,6 @@
   <ItemGroup>
     <Library Include="..\..\Miracl_StaticLib1\Debug\miracl.lib" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\Miracl_StaticLib1\Debug\miracl.pdb" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
