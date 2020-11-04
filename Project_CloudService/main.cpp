@@ -8,23 +8,30 @@ miracl* mip = mirsys(5000, 160);
 PFC pfc(AES_SECURITY);  // initialise pairing-friendly curve
 int len = 0x00;
 int cnt_i = 0, cnt_j = 0, cnt_k = 0;
+_TIME_SERVER_ Time_Server = { 0x00, };
 G1 P;
-
 
 //*****************************************************[Start]************************************************************
 int main()
 {
 	_CLIENT_ Client = { 0x00, };
 	_SERVER_ Server = { 0x00, };
-	_TIME_SERVER_ Time_Server = { 0x00, };
 	pfc.random(P); // P generation 
+
+	printf("**********************[Time Server Start]*************************\n");
+	//Initialize_Time_Server(&Time_Server);
+	//Initialize_Time_Server_min(&Time_Server);
+	HANDLE thread = CreateThread(NULL, 0, Initialize_Time_Server_min, NULL, 0, NULL); //Time_Server Start
+
 
 	printf("**********************[Client Run system]*************************\n");
 
-	Initialize_Time_Server(&Time_Server);
+	printf("**********************[Client set Unlock time]********************\n");
+	printf("Unlocked Time is [ %s ] \n\n", (&Client)->t);
 
 	printf("*************[Client Generates Key, C, TagC from File]************\n");
 	Client_generates_K_C_TagC(&Client);
+
 
 	printf("*************[Client Checks if TagC is in Server]*****************\n");
 	Client_check_to_Server_TacC(&Client, &Server);
@@ -39,9 +46,9 @@ int main()
 	printf("*************[Client Generates H(t), R, LC, sd]*******************\n");
 	Client_Generates_ht_R_LC_sd(&Client, &Server, &Time_Server);
 
-
 	printf("*************[Server Verfiy TagC]*********************************\n");
-	Server_Verifiy_TagC(&Client, &Server, &Time_Server);
+	Server_Verifiy_TagC_min(&Client, &Server, &Time_Server);
+
 
 	if ((&Server)->Tag_Flag == FALSE)
 	{
@@ -50,10 +57,16 @@ int main()
 		return 0;
 	}
 
-	printf("*************[ All processes were executed normally ]*************\n");
-	printf("**************************[End System]****************************\n");
+	if (thread)
+	{
+		WaitForSingleObject(thread, INFINITE);
+	}
+
+	//printf("*************[ All processes were executed normally ]*************\n");
+	//printf("**************************[End System]****************************\n");
 
 	return 0;
+
 	/*printf("\n--[Ecrypted Client_File]\n");
 	Print_char((&Client)->Ct_Client_File, CLIENT_FILE_LEN_PADDING);
 
@@ -67,7 +80,6 @@ int main()
 
 	printf("\n--[TagC of SerVeR]\n");
 	Print_char((&Server)->DBL_TagC, HASH_DIGEST_BYTE);*/
-
 }
 
 #endif
@@ -97,7 +109,7 @@ void Client_generates_K_C_TagC(_CLIENT_* Client)
 	printf("\n***[ Choose number Crypto for Encryption File ]***\n");
 	printf("     1 : AES-128, 2 : LEA-128, 3 : SEED-128  \n");
 	scanf_s("%d", &(Client)->Crypto_Flag);
-	Client_Encrypte_File((Client)->Ct_Client_File,(Client)->Pt_Client_File, (Client)->Client_File_key,CLIENT_FILE_LEN, (Client)->Crypto_Flag);
+	Client_Encrypte_File((Client)->Ct_Client_File, (Client)->Pt_Client_File, (Client)->Client_File_key, CLIENT_FILE_LEN, (Client)->Crypto_Flag);
 	printf("Client generates  Encrypted File Complete\n");
 
 	Client_Hashing_File((Client)->Client_Tag, (Client)->Ct_Client_File, CLIENT_FILE_LEN_PADDING, (Client)->Hashing_Flag);
@@ -160,6 +172,77 @@ void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVE
 	Copy_char((Server)->t, (Client)->t, TIME_LEN);
 	printf("Client send t, R, LC, TagC to Server complete\n\n");
 
+}
+
+void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
+{
+	/* This Function is Initialize_Time_Server
+	 * 1st:  Generate both Secret_Key (s) and Public_key (Q = sP) of Time_Server
+	 * 2nd:  Generate Ts = sH(t) for each day
+	 * 3rd:  Generates TagC from Encrypted File, using SHA-256
+
+	 * Initialize_Time_Server() outputs Ts = sH(t) to a file for each date.
+	 * Here, Ts is an element of G2 in pairing operation, so the file is stored for two points G2 = ((x1,y1), (x2,y2)).
+	 * In this function, there is a process of converting and storing strings.
+	*/
+
+	int cnt_i = 0;
+	unsigned int year = 0, month = 0, date = 0;
+	ZZn2 A, B;
+	Big point1_x, point1_y, point2_x, point2_y;
+	big big_point1_x, big_point1_y, big_point2_x, big_point2_y;
+	FILE* file_pointer;
+	struct tm* t;
+	time_t timer;
+
+	printf("Time_Server Initialization\n");
+
+	file_pointer = fopen("Time_Server.txt", "w");
+
+	// ************[TIme server]
+	// Generate both Secret_Key (s) and Public_key (Q = sP) of Time_Server
+	pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
+	(Time_Server)->TS_Public_Key = pfc.mult(P, (Time_Server)->TS_Secret_Key); //public key generation Q = sP
+
+	//  Generate Ts = sH(t) for each day
+
+
+	for (cnt_i = TIME_SERVER_BUFF; cnt_i >= 0; cnt_i--)
+	{
+
+		timer = time(NULL) - ((unsigned long long)86400 * (unsigned long long)cnt_i); //chose offset of each day
+		t = localtime(&timer); // add strcuture using localtime
+		date = t->tm_mday; // date cacluation
+		month = t->tm_mon + 1; // month cacluation
+		year = t->tm_year + 1900; // year cacluation
+
+		sprintf((Time_Server)->t, "%04d%02d%02d", year, month, date); //t set
+		pfc.hash_and_map((Time_Server)->Ts, (Time_Server)->t); //Ts = H(t) = ht
+		(Time_Server)->Ts = pfc.mult((Time_Server)->Ts, (Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
+
+		//get two point of G2
+		(Time_Server)->Ts.g.get(A, B);
+		A.get(point1_x, point1_y);
+		B.get(point2_x, point2_y);
+
+		//convert G2 to big
+		big_point1_x = point1_x.getbig();
+		big_point1_y = point1_y.getbig();
+		big_point2_x = point2_x.getbig();
+		big_point2_y = point2_y.getbig();
+
+		//write to file
+		fprintf(file_pointer, "[%04d%02d%02d]\n", year, month, date);
+		cotnum(big_point1_x, file_pointer);
+		cotnum(big_point1_y, file_pointer);
+		cotnum(big_point2_x, file_pointer);
+		cotnum(big_point2_y, file_pointer);
+		fputs("\n", file_pointer);
+	}
+
+	fclose(file_pointer);
+
+	printf("Time_Server Publishing Ts file complete\n\n");
 }
 
 void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server)
@@ -247,11 +330,11 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 
 
 	// Server decryptes LC to C
-	Server_Decrypt_LC_to_C((Server)->DBL_C_decrypted_by_LC,(Server)->DBL_LC_File,(Server)->rs_key, CLIENT_FILE_LEN_PADDING,(Server)->Crypto_Flag);
+	Server_Decrypt_LC_to_C((Server)->DBL_C_decrypted_by_LC, (Server)->DBL_LC_File, (Server)->rs_key, CLIENT_FILE_LEN_PADDING, (Server)->Crypto_Flag);
 	printf("------Server decrypts LC Complete\n");
 
 	// Server generates TagC using SHA-256
-	Server_Hashing_File_to_Tag((Server)->DBL_TagC, (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING,(Server)->Hashing_Flag);//Tag generation using File encrypted
+	Server_Hashing_File_to_Tag((Server)->DBL_TagC, (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING, (Server)->Hashing_Flag);//Tag generation using File encrypted
 	printf("------Server generates TagC from the decrypted LC Complete\n");
 
 	// Server verify TagC
@@ -267,7 +350,8 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 	Server_Write_File(Server);
 }
 
-void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
+
+DWORD WINAPI Initialize_Time_Server_min(void* data)
 {
 	/* This Function is Initialize_Time_Server
 	 * 1st:  Generate both Secret_Key (s) and Public_key (Q = sP) of Time_Server
@@ -280,7 +364,7 @@ void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
 	*/
 
 	int cnt_i = 0;
-	unsigned int year = 0, month = 0, date = 0;
+	unsigned int year = 0, month = 0, date = 0, hour = 0, min = 0, sec;
 	ZZn2 A, B;
 	Big point1_x, point1_y, point2_x, point2_y;
 	big big_point1_x, big_point1_y, big_point2_x, big_point2_y;
@@ -294,27 +378,29 @@ void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
 
 	// ************[TIme server]
 	// Generate both Secret_Key (s) and Public_key (Q = sP) of Time_Server
-	pfc.random((Time_Server)->TS_Secret_Key); //secret key generation
-	(Time_Server)->TS_Public_Key = pfc.mult(P, (Time_Server)->TS_Secret_Key); //public key generation Q = sP
+	pfc.random((&Time_Server)->TS_Secret_Key); //secret key generation
+	(&Time_Server)->TS_Public_Key = pfc.mult(P, (&Time_Server)->TS_Secret_Key); //public key generation Q = sP
 
 	//  Generate Ts = sH(t) for each day
 
 
-	for (cnt_i = TIME_SERVER_BUFF; cnt_i >= 0; cnt_i--)
+	for (cnt_i = 0; cnt_i < TIME_SERVER_BUFF_SERVER*2; cnt_i++)
 	{
-
-		timer = time(NULL) - ((unsigned long long)86400 * (unsigned long long)cnt_i); //chose offset of each day
+		timer = time(NULL); //chose offset of each day
 		t = localtime(&timer); // add strcuture using localtime
+		sec = t->tm_sec;
+		min = t->tm_min;
+		hour = t->tm_hour;
 		date = t->tm_mday; // date cacluation
 		month = t->tm_mon + 1; // month cacluation
 		year = t->tm_year + 1900; // year cacluation
 
-		sprintf((Time_Server)->t, "%04d%02d%02d", year, month, date); //t set
-		pfc.hash_and_map((Time_Server)->Ts, (Time_Server)->t); //Ts = H(t) = ht
-		(Time_Server)->Ts = pfc.mult((Time_Server)->Ts, (Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
+		sprintf((&Time_Server)->t, "%04d%02d%02d%02d%02d%02d", year, month, date, hour, min, sec); //t set
+		pfc.hash_and_map((&Time_Server)->Ts, (&Time_Server)->t); //Ts = H(t) = ht
+		(&Time_Server)->Ts = pfc.mult((&Time_Server)->Ts, (&Time_Server)->TS_Secret_Key); //Ts = sH(t) = sht
 
 		//get two point of G2
-		(Time_Server)->Ts.g.get(A, B);
+		(&Time_Server)->Ts.g.get(A, B);
 		A.get(point1_x, point1_y);
 		B.get(point2_x, point2_y);
 
@@ -325,18 +411,142 @@ void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
 		big_point2_y = point2_y.getbig();
 
 		//write to file
-		fprintf(file_pointer, "[%04d%02d%02d]\n", year, month, date);
+		fprintf(file_pointer, "[%04d%02d%02d%02d%02d%02d]\n", year, month, date, hour, min, sec);
 		cotnum(big_point1_x, file_pointer);
 		cotnum(big_point1_y, file_pointer);
 		cotnum(big_point2_x, file_pointer);
 		cotnum(big_point2_y, file_pointer);
 		fputs("\n", file_pointer);
+		Sleep(1000);
 	}
 
 	fclose(file_pointer);
 
 	printf("Time_Server Publishing Ts file complete\n\n");
+
+	return 0;
 }
+
+void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server)
+{
+	/* This Function is Step 4
+	 * 1st: Server get Ts = sH(t), from txt file generated by Time_Server
+	 * 2nd: Server operates sd = e(Ts,R) and generates rs for AES, using sd ; proof : sd = e(Ts,R) = e(sH(t),rP) = e(H(t),P)^sr = e(H(t),sP)^r
+	 * 3rd: Server Decrypt C = UnLock (rs,LC), here rs is key of AES
+	 * 4th: Server generates TagC, using C decrypted 3rd
+	 * 5th: if TagC is not in Server. add DB and deletes DBL, else verify TagC
+	*/
+
+	int cnt_i = 0;
+	int Flag = FALSE;
+	char current_time[TIME_LEN] = { 0x00 };
+	char time_buff[TIME_LEN] = { 0x00 };
+	ZZn2 G2_P1, G2_P2;
+	Big point1_x = { 0x00 }, point1_y = { 0x00 }, point2_x = { 0x00 }, point2_y = { 0x00 };
+	big big_point1_x = mirvar(0), big_point1_y = mirvar(0), big_point2_x = mirvar(0), big_point2_y = mirvar(0);
+	FILE* file_pointer;
+
+	file_pointer = fopen("Time_Server.txt", "r");
+	printf("Connect to Time_Server.....\n");
+
+	for (;;)
+	{
+		big_point1_x = mirvar(0);
+		big_point1_y = mirvar(0);
+		big_point2_x = mirvar(0);
+		big_point2_y = mirvar(0);
+		point1_x = { 0x00 };
+		point1_y = { 0x00 };
+		point2_x = { 0x00 };
+		point2_y = { 0x00 };
+	
+		fgetc(file_pointer); //read '['
+		fgets(time_buff, TIME_LEN, file_pointer); //read "yyyymmddhhmmss"
+		fgetc(file_pointer); //read ']'
+		fgetc(file_pointer); //read 'NULL_C'
+
+		if (time_buff[0] == 0x00)
+		{
+			/*if (Flag == FALSE)
+			{
+				printf("Connecting to Time Server....\n");
+				Flag = TRUE;
+			}*/
+			Sleep(1000);
+			continue;
+		}
+		mip->IOBASE = 256;
+		mip->INPLEN = BNCURVE_POINTLEN * 2;
+		cinnum(big_point1_x, file_pointer); //read 'x of point1'
+		cinnum(big_point1_y, file_pointer); //read 'y of point1'
+		cinnum(big_point2_x, file_pointer); //read 'x of point2'
+		cinnum(big_point2_y, file_pointer); //read 'y of point2'
+
+		fgetc(file_pointer); //read '\n'
+
+
+		if (char_compare((Client)->t, time_buff, TIME_LEN) == TRUE)
+		{
+			printf("Server find TS from TImeServer : [%s]\n", time_buff);
+			break; //get current Ts from Time_Server 
+		}
+		else
+		{
+
+			printf("Server finding TS from TImeServer : [%s]\n", time_buff);
+			Sleep(500);
+			continue; // if time_buff is not same to current time, then continue loof
+		}
+
+	}
+	point1_x = Big(big_point1_x);
+	point1_y = Big(big_point1_y);
+	point2_x = Big(big_point2_x);
+	point2_y = Big(big_point2_y);
+
+	G2_P1.set(point1_x, point1_y);
+	G2_P2.set(point2_x, point2_y);
+
+	(Time_Server)->Ts.g.set(G2_P1, G2_P2);
+	//cout << (Time_Server)->Ts.g << endl;
+
+	printf("------Server get Ts from Time_Server\n");
+
+	// ************[Server]
+	(Server)->sd = pfc.pairing((Time_Server)->Ts, (Client)->rP); //sd = e(ht,Q) ;here Q = rP
+	printf("------Server generates sd = e(ht,Q) Complete\n");
+	(Server)->rs = pfc.hash_to_aes_key((Server)->sd); //rs = hashing(sd)_to AES_KEY
+	printf("------Server generates rs from sd = e(ht,Q) Complete\n");
+
+	// Since type of rs is 'big', we need to change 'big' to 'bytes' for using AES
+	big temp2;
+	char temp2_for_handling_AES_KEY_used_in_Ts[16] = { 0x00 };
+	temp2 = (Server)->rs.getbig(); //cotnum(temp, stdout); //rs is big. big to bytes
+	big_to_bytes(AES_KEY_LEN, temp2, temp2_for_handling_AES_KEY_used_in_Ts, TRUE);
+	Copy_char((Server)->rs_key, temp2_for_handling_AES_KEY_used_in_Ts, AES_KEY_LEN);
+
+
+	// Server decryptes LC to C
+	Server_Decrypt_LC_to_C((Server)->DBL_C_decrypted_by_LC, (Server)->DBL_LC_File, (Server)->rs_key, CLIENT_FILE_LEN_PADDING, (Server)->Crypto_Flag);
+	printf("------Server decrypts LC Complete\n");
+
+	// Server generates TagC using SHA-256
+	Server_Hashing_File_to_Tag((Server)->DBL_TagC, (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING, (Server)->Hashing_Flag);//Tag generation using File encrypted
+	printf("------Server generates TagC from the decrypted LC Complete\n");
+
+	// Server verify TagC
+	printf("------Server verificates TagC\n");
+	Server_Tag_Verification((Server)->DBL_TagC, (Client)->Client_Tag, HASH_DIGEST_BYTE, &((Server)->Tag_Flag));
+
+	Hash_Function_using_SHA_256(Client->name, Client_Name_Len, Server->DB_UIDC[Server->Client_Numeber]);
+
+
+	Copy_char((Server)->DB_TagC[Server->Client_Numeber], (Server)->DBL_TagC, HASH_DIGEST_BYTE);
+	Copy_char((Server)->DB_Ct_Client_File, (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING);
+	//Write TagC, Cipher, and DB_UIDC  data to File
+	Server_Write_File(Server);
+}
+
 
 # if 0
 //[밑은 테스트코드 입니다] * ***********************************************************************************************************************************************************************
