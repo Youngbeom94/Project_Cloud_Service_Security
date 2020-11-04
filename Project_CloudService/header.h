@@ -28,7 +28,8 @@
 #define PT_LEN 16
 #define TIME_SERVER_BUFF 10
 #define TIME_SERVER_BUFF_SERVER 60
-#define TIME_LEN 15 // if it's not test version, it should be 9
+//#define TIME_LEN 15 // if it's not test version, it should be 9
+#define TIME_LEN 9 // if it's not test version, it should be 9
 
 #define Client_Name_Len 20
 #define DB_Range 10
@@ -54,8 +55,8 @@ typedef struct __CLIENT_STRUCTURE__ {
 	char Client_File_key[16] = { 0x00 };
 	char Client_Tag[HASH_DIGEST_BYTE] = { 0x00 };
 
-	char t[TIME_LEN] = "20201104143740";
-	//char t[TIME_LEN] = "20201104";
+	char t[TIME_LEN] = "20201104";// Test case : check sec
+	//char t[TIME_LEN] = "20201104"; // General case : check day
 	char Time_Flag = TRUE; //Time server authentication passed in all cases 
 	char DB_Flag = -1; 
 	int Crypto_Flag = -1;
@@ -67,7 +68,6 @@ typedef struct __CLIENT_STRUCTURE__ {
 	Big r;
 	Big rs;
 }_CLIENT_;
-
 
 typedef struct __SERVER_STRUCTURE__ {
 	// DB Part

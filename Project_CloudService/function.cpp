@@ -280,7 +280,6 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server)
 			{
 				break;
 			}
-
 			if (cnt_j == (HASH_DIGEST_BYTE - 1))
 			{
 				Client->DB_Flag = TRUE;
@@ -292,7 +291,6 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server)
 	}
 	Client->DB_Flag = FALSE;
 	Server->Client_Numeber = 0;
-
 	printf("Client receive N/A of TagC from Server\n\n");
 
 }

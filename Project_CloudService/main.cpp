@@ -11,7 +11,6 @@ int cnt_i = 0, cnt_j = 0, cnt_k = 0;
 _TIME_SERVER_ Time_Server = { 0x00, };
 G1 P;
 
-
 //*****************************************************[Start]************************************************************
 
 int main()
@@ -21,9 +20,8 @@ int main()
 	pfc.random(P); // P generation 
 
 	printf("**********************[Time Server Start]*************************\n");
-	//Initialize_Time_Server(&Time_Server);
-	//Initialize_Time_Server_min(&Time_Server);
-	HANDLE thread = CreateThread(NULL, 0, Initialize_Time_Server_min, NULL, 0, NULL); //Time_Server Start
+	Initialize_Time_Server(&Time_Server);
+	//HANDLE thread = CreateThread(NULL, 0, Initialize_Time_Server_min, NULL, 0, NULL); //Time_Server Start
 
 
 	printf("**********************[Client Run system]*************************\n");
@@ -49,7 +47,8 @@ int main()
 	Client_Generates_ht_R_LC_sd(&Client, &Server, &Time_Server);
 
 	printf("*************[Server Verfiy TagC]*********************************\n");
-	Server_Verifiy_TagC_min(&Client, &Server, &Time_Server);
+	//Server_Verifiy_TagC_min(&Client, &Server, &Time_Server);
+	Server_Verifiy_TagC(&Client, &Server, &Time_Server);
 
 
 	if ((&Server)->Tag_Flag == FALSE)
@@ -59,29 +58,15 @@ int main()
 		return 0;
 	}
 
-	if (thread)
+	/*if (thread)
 	{
 		WaitForSingleObject(thread, INFINITE);
-	}
+	}*/
 
-	//printf("*************[ All processes were executed normally ]*************\n");
-	//printf("**************************[End System]****************************\n");
+	printf("*************[ All processes were executed normally ]*************\n");
+	printf("**************************[End System]****************************\n");
 
 	return 0;
-
-	/*printf("\n--[Ecrypted Client_File]\n");
-	Print_char((&Client)->Ct_Client_File, CLIENT_FILE_LEN_PADDING);
-
-
-	printf("\n--[Client_Tag]\n");
-	Print_char((&Client)->Client_Tag, HASH_DIGEST_BYTE);
-
-	printf("\n--[Decrypted LC to C]\n");
-	Print_char((&Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING);
-
-
-	printf("\n--[TagC of SerVeR]\n");
-	Print_char((&Server)->DBL_TagC, HASH_DIGEST_BYTE);*/
 }
 
 #endif
@@ -136,7 +121,6 @@ void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVE
 	 * 3rd: Client Generates LC = (rs,C) where rs = hash to AES_Key(sd)
 	 * 4th: Client Delete FIle F from his storage and send t,R, LC, TagC to Server
 	*/
-
 	int Crypto_Flag = -1;
 	// ************[[Client]
 	// Client generates ht = H(t); t is time(string). if server time is not same on t, then server can't decrypt LC
@@ -173,7 +157,6 @@ void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVE
 	Copy_char((Server)->DBL_LC_File, (Client)->Ct_LC_File, CLIENT_FILE_LEN_PADDING);
 	Copy_char((Server)->t, (Client)->t, TIME_LEN);
 	printf("Client send t, R, LC, TagC to Server complete\n\n");
-
 }
 
 void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
@@ -272,7 +255,7 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 	sprintf(current_time, "%04d%02d%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
 
 	file_pointer = fopen("Time_Server.txt", "r");
-
+	printf("Connect to Time_Server.....\n");
 	for (cnt_i = 0; cnt_i <= TIME_SERVER_BUFF + 10; cnt_i++)
 	{
 		fgetc(file_pointer); //read '['
@@ -343,6 +326,11 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 	printf("------Server verificates TagC\n");
 	Server_Tag_Verification((Server)->DBL_TagC, (Client)->Client_Tag, HASH_DIGEST_BYTE, &((Server)->Tag_Flag));
 
+	if ((Server)->Tag_Flag == FALSE)
+	{
+		return ;
+	}
+
 	Hash_Function_using_SHA_256(Client->name, Client_Name_Len, Server->DB_UIDC[Server->Client_Numeber]);
 
 
@@ -383,9 +371,7 @@ DWORD WINAPI Initialize_Time_Server_min(void* data)
 	pfc.random((&Time_Server)->TS_Secret_Key); //secret key generation
 	(&Time_Server)->TS_Public_Key = pfc.mult(P, (&Time_Server)->TS_Secret_Key); //public key generation Q = sP
 
-	//  Generate Ts = sH(t) for each day
-
-
+	//  Generate Ts = sH(t) for each sec
 	for (;;)
 	{
 		timer = time(NULL); //chose offset of each day
@@ -426,7 +412,6 @@ DWORD WINAPI Initialize_Time_Server_min(void* data)
 			break;
 		}
 	}
-
 	fclose(file_pointer);
 
 	printf("Time_Server Publishing Ts file complete\n\n");
@@ -458,15 +443,15 @@ void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* 
 
 	for (;;)
 	{
-		big_point1_x = mirvar(0);
-		big_point1_y = mirvar(0);
-		big_point2_x = mirvar(0);
-		big_point2_y = mirvar(0);
 		point1_x = { 0x00 };
 		point1_y = { 0x00 };
 		point2_x = { 0x00 };
 		point2_y = { 0x00 };
-	
+		big_point1_x = mirvar(0);
+		big_point1_y = mirvar(0);
+		big_point2_x = mirvar(0);
+		big_point2_y = mirvar(0);
+
 		fgetc(file_pointer); //read '['
 		fgets(time_buff, TIME_LEN, file_pointer); //read "yyyymmddhhmmss"
 		fgetc(file_pointer); //read ']'
@@ -474,11 +459,6 @@ void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* 
 
 		if (time_buff[0] == 0x00)
 		{
-			/*if (Flag == FALSE)
-			{
-				printf("Connecting to Time Server....\n");
-				Flag = TRUE;
-			}*/
 			Sleep(1000);
 			continue;
 		}
