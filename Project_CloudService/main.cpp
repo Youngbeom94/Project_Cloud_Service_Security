@@ -11,7 +11,9 @@ int cnt_i = 0, cnt_j = 0, cnt_k = 0;
 _TIME_SERVER_ Time_Server = { 0x00, };
 G1 P;
 
+
 //*****************************************************[Start]************************************************************
+
 int main()
 {
 	_CLIENT_ Client = { 0x00, };
@@ -384,7 +386,7 @@ DWORD WINAPI Initialize_Time_Server_min(void* data)
 	//  Generate Ts = sH(t) for each day
 
 
-	for (cnt_i = 0; cnt_i < TIME_SERVER_BUFF_SERVER*2; cnt_i++)
+	for (;;)
 	{
 		timer = time(NULL); //chose offset of each day
 		t = localtime(&timer); // add strcuture using localtime
@@ -418,6 +420,11 @@ DWORD WINAPI Initialize_Time_Server_min(void* data)
 		cotnum(big_point2_y, file_pointer);
 		fputs("\n", file_pointer);
 		Sleep(1000);
+
+		if ((&Time_Server)->Server_Flag == TRUE)
+		{
+			break;
+		}
 	}
 
 	fclose(file_pointer);
@@ -488,13 +495,14 @@ void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* 
 		if (char_compare((Client)->t, time_buff, TIME_LEN) == TRUE)
 		{
 			printf("Server find TS from TImeServer : [%s]\n", time_buff);
+			(Time_Server)->Server_Flag = TRUE;
 			break; //get current Ts from Time_Server 
 		}
 		else
 		{
 
 			printf("Server finding TS from TImeServer : [%s]\n", time_buff);
-			Sleep(500);
+			Sleep(1000);
 			continue; // if time_buff is not same to current time, then continue loof
 		}
 

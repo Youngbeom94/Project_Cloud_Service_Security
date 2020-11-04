@@ -54,13 +54,12 @@ typedef struct __CLIENT_STRUCTURE__ {
 	char Client_File_key[16] = { 0x00 };
 	char Client_Tag[HASH_DIGEST_BYTE] = { 0x00 };
 
-	char t[TIME_LEN] = "20201104132130";
+	char t[TIME_LEN] = "20201104143740";
 	//char t[TIME_LEN] = "20201104";
 	char Time_Flag = TRUE; //Time server authentication passed in all cases 
 	char DB_Flag = -1; 
 	int Crypto_Flag = -1;
 	int Hashing_Flag = -1;
-
 
 	G1 rP; //R = rP
 	G2 ht;
@@ -103,7 +102,7 @@ typedef struct __TIME_SERVER_STRUCTURE__ {
 	G2 Ts;
 	GT sd;
 	Big rs;
-	char Flag = FALSE;
+	char Server_Flag = FALSE;
 
 }_TIME_SERVER_;
 
