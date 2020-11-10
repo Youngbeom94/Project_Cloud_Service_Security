@@ -7,7 +7,6 @@ Miracl precision = 100;
 miracl* mip = mirsys(5000, 160);
 PFC pfc(AES_SECURITY);  // initialise pairing-friendly curve
 int len = 0x00;
-int cnt_i = 0, cnt_j = 0, cnt_k = 0;
 _TIME_SERVER_ Time_Server = { 0x00, };
 G1 P;
 
@@ -17,6 +16,8 @@ int main()
 {
 	_CLIENT_ Client = { 0x00, };
 	_SERVER_ Server = { 0x00, };
+	_FILE_ELEMENT_ File = { 0x00, };
+	int cnt_i = 0, cnt_j = 0, cnt_k = 0;
 	pfc.random(P); // P generation 
 
 	printf("**********************[Time Server Start]*************************\n");
@@ -24,47 +25,52 @@ int main()
 	//HANDLE thread = CreateThread(NULL, 0, Initialize_Time_Server_min, NULL, 0, NULL); //Time_Server Start
 
 
-	printf("**********************[Client Run system]*************************\n");
-
-	printf("**********************[Client set Unlock time]********************\n");
-	printf("Unlocked Time is [ %s ] \n\n", (&Client)->t);
-
-	printf("*************[Client Generates Key, C, TagC from File]************\n");
-	Client_generates_K_C_TagC(&Client);
-
-
-	printf("*************[Client Checks if TagC is in Server]*****************\n");
-	Client_check_to_Server_TacC(&Client, &Server);
-
-	if ((&Client)->DB_Flag == TRUE)
+	for (cnt_i = 0; cnt_i < 4; cnt_i++)
 	{
-		printf("*************[Server add Client into UIDC]********************\n");
-		printf("*************[End System]*************\n");
-		return 0;
+		printf("**********************[Client Run system]*************************\n");
+
+		printf("*************[Client Generates Key, C, TagC from File]************\n");
+		Client_generates_K_C_TagC(&Client, &File);
+
+		/*printf("current user %d \n", (&File)->current_client);
+		Print_char((&File)->Client_Tag[(&File)->current_client], HASH_DIGEST_BYTE);*/
+
+
+		printf("*************[Client Checks if TagC is in Server]*****************\n");
+		Client_check_to_Server_TacC(&Client, &Server, &File);
+
+		if ((&Client)->DB_Flag == TRUE)
+		{
+			printf("*************[Server add Client into UIDC]********************\n");
+			printf("*************[End System]*************\n");
+			continue ;
+		}
+
+		printf("*************[Client Generates H(t), R, LC, sd]*******************\n");
+		Client_Generates_ht_R_LC_sd(&Client, &Server, &Time_Server, &File);
+
+		printf("*************[Server Verfiy TagC]*********************************\n");
+		Server_Verifiy_TagC(&Client, &Server, &Time_Server, &File);
+		//Server_Verifiy_TagC_min(&Client, &Server, &Time_Server);
+
+
+		if ((&Server)->Tag_Flag == FALSE)
+		{
+			printf("*************[Server add Client into Black list]**************\n");
+			printf("*************[End System]*************\n");
+			continue ;
+		}
+
+		///*if (thread)
+		//{
+		//	WaitForSingleObject(thread, INFINITE);
+		//}*/
 	}
 
-	printf("*************[Client Generates H(t), R, LC, sd]*******************\n");
-	Client_Generates_ht_R_LC_sd(&Client, &Server, &Time_Server);
 
-	printf("*************[Server Verfiy TagC]*********************************\n");
-	//Server_Verifiy_TagC_min(&Client, &Server, &Time_Server);
-	Server_Verifiy_TagC(&Client, &Server, &Time_Server);
-
-
-	if ((&Server)->Tag_Flag == FALSE)
-	{
-		printf("*************[Server add Client into Black list]**************\n");
-		printf("*************[End System]*************\n");
-		return 0;
-	}
-
-	/*if (thread)
-	{
-		WaitForSingleObject(thread, INFINITE);
-	}*/
-
-	printf("*************[ All processes were executed normally ]*************\n");
-	printf("**************************[End System]****************************\n");
+		printf("*************[ All processes were executed normally ]*************\n");
+		printf("**************************[End System]****************************\n");
+	
 
 	return 0;
 }
@@ -72,7 +78,7 @@ int main()
 #endif
 
 
-void Client_generates_K_C_TagC(_CLIENT_* Client)
+void Client_generates_K_C_TagC(_CLIENT_* Client, _FILE_ELEMENT_ * File)
 {
 	/* This Function is Step 1
 	* 1st:  Do Generates Key from given File, using SHA-256
@@ -80,40 +86,40 @@ void Client_generates_K_C_TagC(_CLIENT_* Client)
 	* 3rd:  Generates TagC from Encrypted File, using SHA-256
 	*/
 	//Read File
-	Client_Read_File(Client);
+	Client_Read_File(Client, File);
 	printf("Client read File Complete\n");
 
 	//key generation using File
 	printf("\n***[ Choose number Crypto for Hashing File ]***\n");
 	printf("     1 : SHA-256, 2 : SHA-512, 3 : SHA-3  \n");
 	scanf_s("%d", &(Client)->Hashing_Flag);
-	Client_Hashing_File((Client)->Client_Tag, (Client)->Pt_Client_File, CLIENT_FILE_LEN, (Client)->Hashing_Flag);
+	Client_Hashing_File((File)->Client_Tag[(File)->current_client], (File)->Pt_Client_File[(File)->current_client], CLIENT_FILE_LEN, (Client)->Hashing_Flag);
 
-	Generating_key_using_fixed_digest((Client)->Client_File_key, AES_KEY_LEN, (Client)->Client_Tag);
+	Generating_key_using_fixed_digest((File)->Client_File_key[(File)->current_client], AES_KEY_LEN, (File)->Client_Tag[(File)->current_client]);
 	printf("Client generates Key of File Complete\n");
 
 	//Encrypt Clinet File key generated in Hash_Function_using_SHA_256
 	printf("\n***[ Choose number Crypto for Encryption File ]***\n");
 	printf("     1 : AES-128, 2 : LEA-128, 3 : SEED-128  \n");
 	scanf_s("%d", &(Client)->Crypto_Flag);
-	Client_Encrypte_File((Client)->Ct_Client_File, (Client)->Pt_Client_File, (Client)->Client_File_key, CLIENT_FILE_LEN, (Client)->Crypto_Flag);
+	Client_Encrypte_File((File)->Ct_Client_File[(File)->current_client], (File)->Pt_Client_File[(File)->current_client], (File)->Client_File_key[(File)->current_client], CLIENT_FILE_LEN, (Client)->Crypto_Flag);
 	printf("Client generates  Encrypted File Complete\n");
 
-	Client_Hashing_File((Client)->Client_Tag, (Client)->Ct_Client_File, CLIENT_FILE_LEN_PADDING, (Client)->Hashing_Flag);
+	Client_Hashing_File((File)->Client_Tag[(File)->current_client], (File)->Ct_Client_File[(File)->current_client], CLIENT_FILE_LEN_PADDING, (Client)->Hashing_Flag);
 	printf("Client generates  TagC of Encrypted File Complete\n\n");
 }
 
-void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server)
+void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEMENT_* File)
 {
 	/* This Function is Step 2
 	 * 1st:    Client check that Server has TagC
 	 * 2nd-1:  if TagC not in Server Client's DB_Flag is FALSE
 	 * 2nd-2:  if TagC  in Server Client's DB_Flag is TRUE
 	*/
-	Client_Check_TagC_in_DB(Client, Server);
+	Client_Check_TagC_in_DB(Client, Server, File);
 }
 
-void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server)
+void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, _FILE_ELEMENT_* File)
 {
 	/* This Function is Step 3
 	 * 1st: Client generates ht = H(t); t is time (string). if server time is not same on t, then server can't decrypt LC
@@ -124,6 +130,12 @@ void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVE
 	int Crypto_Flag = -1;
 	// ************[[Client]
 	// Client generates ht = H(t); t is time(string). if server time is not same on t, then server can't decrypt LC
+
+	printf("**********************[Client set Unlock time]********************\n");
+	printf("Please Enter Unlocked Time : ");
+	getchar();
+	scanf_s("%s",(Client)->t,sizeof((Client)->t));
+	
 	printf("Client set time and generates ht = H(t) complete\n");
 	pfc.hash_and_map((Client)->ht, (Client)->t); //ht generation using t
 
@@ -148,13 +160,13 @@ void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVE
 	printf("\n***[ Choose number Crypto for Encryption LC ]***\n");
 	printf("     1 : AES-128, 2 : LEA-128, 3 : SEED-128, 4 : XoR_based  \n");
 	scanf_s("%d", &(Client)->Crypto_Flag);
-	Client_Encrypte_C_to_LC((Client)->Ct_LC_File, (Client)->Ct_Client_File, temp_for_handling_AES_KEY, CLIENT_FILE_LEN_PADDING, (Client)->Crypto_Flag);
+	Client_Encrypte_C_to_LC((File)->Ct_LC_File[(File)->current_client], (File)->Ct_Client_File[(File)->current_client], temp_for_handling_AES_KEY, CLIENT_FILE_LEN_PADDING, (Client)->Crypto_Flag);
 	printf("Client generates LC of C complete\n");
 
 	//Client Delete FIle F from his storage and send t, R, LC, TagC to Server
 	(Server)->Hashing_Flag = (Client)->Hashing_Flag;
 	(Server)->Crypto_Flag = (Client)->Crypto_Flag;
-	Copy_char((Server)->DBL_LC_File, (Client)->Ct_LC_File, CLIENT_FILE_LEN_PADDING);
+	Copy_char((Server)->DBL_LC_File, (File)->Ct_LC_File[(File)->current_client], CLIENT_FILE_LEN_PADDING);
 	Copy_char((Server)->t, (Client)->t, TIME_LEN);
 	printf("Client send t, R, LC, TagC to Server complete\n\n");
 }
@@ -230,7 +242,7 @@ void Initialize_Time_Server(_TIME_SERVER_* Time_Server)
 	printf("Time_Server Publishing Ts file complete\n\n");
 }
 
-void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server)
+void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, _FILE_ELEMENT_* File)
 {
 	/* This Function is Step 4
 	 * 1st: Server get Ts = sH(t), from txt file generated by Time_Server
@@ -308,7 +320,7 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 
 	// Since type of rs is 'big', we need to change 'big' to 'bytes' for using AES
 	big temp2;
-	char temp2_for_handling_AES_KEY_used_in_Ts[16] = { 0x00 };
+	char temp2_for_handling_AES_KEY_used_in_Ts[AES_KEY_LEN] = { 0x00 };
 	temp2 = (Server)->rs.getbig(); //cotnum(temp, stdout); //rs is big. big to bytes
 	big_to_bytes(AES_KEY_LEN, temp2, temp2_for_handling_AES_KEY_used_in_Ts, TRUE);
 	Copy_char((Server)->rs_key, temp2_for_handling_AES_KEY_used_in_Ts, AES_KEY_LEN);
@@ -324,18 +336,18 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 
 	// Server verify TagC
 	printf("------Server verificates TagC\n");
-	Server_Tag_Verification((Server)->DBL_TagC, (Client)->Client_Tag, HASH_DIGEST_BYTE, &((Server)->Tag_Flag));
+	Server_Tag_Verification((Server)->DBL_TagC, (File)->Client_Tag[(File)->current_client], HASH_DIGEST_BYTE, &((Server)->Tag_Flag));
 
 	if ((Server)->Tag_Flag == FALSE)
 	{
 		return ;
 	}
 
-	Hash_Function_using_SHA_256(Client->name, Client_Name_Len, Server->DB_UIDC[Server->Client_Numeber]);
+	Hash_Function_using_SHA_256(File->name[File->current_client], Client_Name_Len, Server->DB_UIDC[Server->Client_Numeber]);
+	//Server->DB_UIDC[Server->Client_Numeber] = Server->File_NUM;
 
-
-	Copy_char((Server)->DB_TagC[Server->Client_Numeber], (Server)->DBL_TagC, HASH_DIGEST_BYTE);
-	Copy_char((Server)->DB_Ct_Client_File, (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING);
+	Copy_char((Server)->DB_TagC[Server->File_NUM], (Server)->DBL_TagC, HASH_DIGEST_BYTE);
+	Copy_char((Server)->DB_Ct_Client_File[Server->File_NUM], (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING);
 	//Write TagC, Cipher, and DB_UIDC  data to File
 	Server_Write_File(Server);
 }
@@ -508,7 +520,7 @@ void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* 
 
 	// Since type of rs is 'big', we need to change 'big' to 'bytes' for using AES
 	big temp2;
-	char temp2_for_handling_AES_KEY_used_in_Ts[16] = { 0x00 };
+	char temp2_for_handling_AES_KEY_used_in_Ts[AES_KEY_LEN] = { 0x00 };
 	temp2 = (Server)->rs.getbig(); //cotnum(temp, stdout); //rs is big. big to bytes
 	big_to_bytes(AES_KEY_LEN, temp2, temp2_for_handling_AES_KEY_used_in_Ts, TRUE);
 	Copy_char((Server)->rs_key, temp2_for_handling_AES_KEY_used_in_Ts, AES_KEY_LEN);
@@ -528,11 +540,10 @@ void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* 
 
 	Hash_Function_using_SHA_256(Client->name, Client_Name_Len, Server->DB_UIDC[Server->Client_Numeber]);
 
-
 	Copy_char((Server)->DB_TagC[Server->Client_Numeber], (Server)->DBL_TagC, HASH_DIGEST_BYTE);
-	Copy_char((Server)->DB_Ct_Client_File, (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING);
+	Copy_char((Server)->DB_Ct_Client_File[Server->Client_Numeber], (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING);
 	//Write TagC, Cipher, and DB_UIDC  data to File
-	Server_Write_File(Server);
+	//Server_Write_File(Server);
 }
 
 

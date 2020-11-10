@@ -1,11 +1,10 @@
 ﻿  function.cpp
-  main.cpp
 miracl.lib(mrcore.obj) : warning LNK4075: '/EDITANDCONTINUE'이(가) '/OPT:ICF' 사양으로 인해 무시됩니다.
 LINK : warning LNK4098: 'MSVCRTD' defaultlib가 다른 라이브러리와 충돌합니다. /NODEFAULTLIB:library를 사용하십시오.
   코드를 생성하고 있습니다.
-  1 of 322 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+  4 of 204 functions ( 2.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    7 functions had inline decision re-evaluated but remain unchanged
+    2 functions had inline decision re-evaluated but remain unchanged
   코드를 생성했습니다.
 miracl.lib(mralloc.obj) : warning LNK4099: 'Miracl_StaticLib1.pdb' PDB를 'miracl.lib(mralloc.obj)' 또는 'C:\Users\YoungBeom\source\repos\Project_CloudService\Release\Miracl_StaticLib1.pdb'에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
 miracl.lib(mrarth0.obj) : warning LNK4099: 'Miracl_StaticLib1.pdb' PDB를 'miracl.lib(mrarth0.obj)' 또는 'C:\Users\YoungBeom\source\repos\Project_CloudService\Release\Miracl_StaticLib1.pdb'에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.

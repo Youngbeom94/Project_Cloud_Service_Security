@@ -268,29 +268,43 @@ void Client_Encryption_LC_using_AES_128_CBC(char* src, int src_len, char* dst, c
 
 }
 
-void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server)
+void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEMENT_* File)
 {
-	int cnt_i = 0x00, cnt_j = 0x00;
+	int cnt_i = 0x00, cnt_j = 0x00, cnt_k = 0x00;
+	FILE* file_pointer;
 
 	for (cnt_i = 0; cnt_i < DB_Range; cnt_i++)
 	{
 		for (cnt_j = 0; cnt_j < HASH_DIGEST_BYTE; cnt_j++)
 		{
-			if (Client->Client_Tag[cnt_j] != Server->DB_TagC[cnt_i][cnt_j])
+			if (File->Client_Tag[File->current_client][cnt_j] != Server->DB_TagC[cnt_i][cnt_j])
 			{
 				break;
 			}
+
 			if (cnt_j == (HASH_DIGEST_BYTE - 1))
 			{
 				Client->DB_Flag = TRUE;
 				printf("Client_TagC in DB of SerVer\n\n");
-				Server_add_Client_to_UIDC(Server->DB_UIDC, Client->name, &((Server)->Client_Numeber));
+				Server_add_Client_to_UIDC(Server->DB_UIDC, File->name[File->current_client], &((Server)->Client_Numeber));
+
+				file_pointer = fopen("Server_DB.txt", "a");
+
+				fprintf(file_pointer, "\n\n[File : %d]\n", cnt_i);
+
+				fputs("[UIDC]\n", file_pointer);
+				Hash_Function_using_SHA_256(File->name[File->current_client], Client_Name_Len, File->name[File->current_client]);
+				for (cnt_k = 0; cnt_k < HASH_DIGEST_BYTE; cnt_k++)
+				{
+					fprintf(file_pointer, "%02X ", (unsigned char)File->name[File->current_client][cnt_k]);
+				}
+				fclose(file_pointer);
 				return;
 			}
 		}
 	}
 	Client->DB_Flag = FALSE;
-	Server->Client_Numeber = 0;
+	Server->Client_Numeber ++;
 	printf("Client receive N/A of TagC from Server\n\n");
 
 }
@@ -401,29 +415,71 @@ void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
 
 }
 
-void Client_Read_File(_CLIENT_* Client)
+void Client_Read_File(_CLIENT_* Client, _FILE_ELEMENT_* File)
 {
-	char from_a_txt[CLIENT_FILE_LEN];
+
 	FILE* file_pointer;
-	file_pointer = fopen("Client_Pt.txt", "r");
+	char User_name[Client_Name_Len];
+	char fileName[FILENAME_LEN];
+	char from_a_txt[CLIENT_FILE_LEN];
+
+	printf("Please Enter User Name : ");
+	scanf_s("%s", User_name, sizeof(User_name));
+	Add_File_Client_Num(File, User_name);
+
+	system("dir");
+	getchar();
+
+	printf("Please Enter File Name : ");
+	fgets(fileName, sizeof(fileName), stdin);
+
+	file_pointer = fopen(fileName, "r");
+	assert(file_pointer != NULL);
+
+
 	fgets(from_a_txt, CLIENT_FILE_LEN, file_pointer);
 
-	//printf("Current File data: %s \n", from_a_txt);
-
-	Copy_char(Client->Pt_Client_File, from_a_txt, CLIENT_FILE_LEN);
+	Copy_char(File->Pt_Client_File[(File)->current_client], from_a_txt, CLIENT_FILE_LEN);
 
 	fclose(file_pointer);
-
-
 }
 
+void Add_File_Client_Num(_FILE_ELEMENT_* File, char* name)
+{
+	int cnt_i = 0x00, cnt_j = 0x00, cnt_k = 0x00;
+	//Print_char(name, Client_Name_Len);
+	for (cnt_i = 0; cnt_i < CLIENT_NUMBER; cnt_i++)
+	{
+		for (cnt_j = 0; cnt_j < Client_Name_Len; cnt_j++)
+		{
+			if ((((File)->name[cnt_i][cnt_j]) != name[cnt_j]))
+			{
+				break;
+			}
+
+			if (cnt_j == (Client_Name_Len - 1))
+			{
+				File->current_client = cnt_i;
+				printf("Client aleady Access\n");
+				return ;
+			}
+		}
+	}
+	File->client_buff = File->client_buff++;
+	File->current_client = File->client_buff;
+	for (cnt_i = 0; cnt_i < Client_Name_Len; cnt_i++)
+	{
+		(File)->name[File->current_client][cnt_i] = name[cnt_i];
+	}
+
+}
 void Server_Write_File(_SERVER_* Server)
 {
 	int cnt_i = 0;
 	FILE* file_pointer;
-	file_pointer = fopen("Server_DB.txt", "w");
-	fputs("[********SERVER DB********]\n", file_pointer);
+	file_pointer = fopen("Server_DB.txt", "a");
 
+	fprintf(file_pointer, "\n\n[File : %d]\n", Server->File_NUM);
 	fputs("[UIDC]\n", file_pointer);
 	for (cnt_i = 0; cnt_i < HASH_DIGEST_BYTE; cnt_i++)
 	{
@@ -433,17 +489,16 @@ void Server_Write_File(_SERVER_* Server)
 	fputs("\n[TagC]\n", file_pointer);
 	for (cnt_i = 0; cnt_i < HASH_DIGEST_BYTE; cnt_i++)
 	{
-		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_TagC[Server->Client_Numeber][cnt_i]);
+		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_TagC[Server->File_NUM][cnt_i]);
 	}
 
 	fputs("\n[Encrypted Client File]\n", file_pointer);
 	for (cnt_i = 0; cnt_i < CLIENT_FILE_LEN_PADDING; cnt_i++)
 	{
-		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_Ct_Client_File[cnt_i]);
+		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_Ct_Client_File[Server->File_NUM][cnt_i]);
 	}
-
+	Server->File_NUM++;
 	fclose(file_pointer);
-
 }
 
 int	char_compare(char* src1, char* src2, int len)

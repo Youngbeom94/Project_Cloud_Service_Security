@@ -6,6 +6,7 @@
 #include <ctime>
 #include <stdlib.h>
 #include <time.h>
+#include<assert.h>
 #include "zzn.h"
 #include "miracl.h"
 #include "big.h"
@@ -45,19 +46,40 @@
 #define SHA_512 2 
 #define SHA_3	3
 
+#define CLIENT_NUMBER 5
+#define FILENAME_LEN 10
+
+
+typedef struct __FILE_ELEMENT__ {
+	char name[CLIENT_NUMBER][Client_Name_Len];
+	char Pt_Client_File[CLIENT_NUMBER][CLIENT_FILE_LEN];
+	char Ct_Client_File[CLIENT_NUMBER][CLIENT_FILE_LEN_PADDING] = { 0x00, };
+	char Ct_LC_File[CLIENT_NUMBER][CLIENT_FILE_LEN_PADDING] = { 0x00, };
+	char Client_File_key[CLIENT_NUMBER][AES_KEY_LEN] = { 0x00 };
+	char Client_Tag[CLIENT_NUMBER][HASH_DIGEST_BYTE] = { 0x00 };
+
+	char t[CLIENT_NUMBER][TIME_LEN] = {0x00}; // General case : check day
+	//char t[TIME_LEN] = "20201105112050";// Test case : check sec
+	int client_buff = -1;
+	int current_client = -1;
+	char Time_Flag = TRUE; //Time server authentication passed in all cases 
+	char DB_Flag = -1;
+
+}_FILE_ELEMENT_;
 
 
 typedef struct __CLIENT_STRUCTURE__ {
-	char name[Client_Name_Len] = "Alice";
+	char name[Client_Name_Len] ;
 	char Pt_Client_File[CLIENT_FILE_LEN];
 	char Ct_Client_File[CLIENT_FILE_LEN_PADDING] = { 0x00, };
 	char Ct_LC_File[CLIENT_FILE_LEN_PADDING] = { 0x00, };
 	char Client_File_key[16] = { 0x00 };
 	char Client_Tag[HASH_DIGEST_BYTE] = { 0x00 };
 
-	char t[TIME_LEN] = "20201105"; // General case : check day
+	char t[TIME_LEN] = {0x00}; // General case : check day
 	//char t[TIME_LEN] = "20201105112050";// Test case : check sec
 	char Time_Flag = TRUE; //Time server authentication passed in all cases 
+	int File_NUM = 1;
 	char DB_Flag = -1; 
 	int Crypto_Flag = -1;
 	int Hashing_Flag = -1;
@@ -72,9 +94,10 @@ typedef struct __CLIENT_STRUCTURE__ {
 typedef struct __SERVER_STRUCTURE__ {
 	// DB Part
 	char DB_TagC[DB_Range][HASH_DIGEST_BYTE] = { 0x00,0x00 };
-	char DB_Ct_Client_File[CLIENT_FILE_LEN_PADDING] = { 0x00, };
+	char DB_Ct_Client_File[DB_Range][CLIENT_FILE_LEN_PADDING] = { 0x00, };
 	char DB_UIDC[DB_Range][HASH_DIGEST_BYTE] = { 0x00 };
-	char Client_Numeber = 0x00;
+	char Client_Numeber = -1;
+	char File_NUM = 0;
 
 	//DBL Part
 	char t[TIME_LEN];
@@ -106,7 +129,8 @@ typedef struct __TIME_SERVER_STRUCTURE__ {
 
 }_TIME_SERVER_;
 
-void Client_Read_File(_CLIENT_* Client);
+void Client_Read_File(_CLIENT_* Client, _FILE_ELEMENT_ * File);
+void Add_File_Client_Num(_FILE_ELEMENT_* File, char* name);
 void Server_Write_File(_SERVER_* Server);
 
 
@@ -120,7 +144,7 @@ void Client_Encrypte_C_to_LC(char* dst, char* src, char* key, int len, int Crypt
 void Client_Hashing_File(char* dst, char* src, int len, int Hashing_Flag);
 void Client_Encryption_using_AES_128_CBC(char* src, int src_len, char* dst, char* key);
 void Client_Encryption_LC_using_AES_128_CBC(char* src, int src_len, char* dst, char* key);
-void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server);
+void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEMENT_* File);
 void Server_Hashing_File_to_Tag(char* dst, char* src, int len, int Hashing_Flag);
 void Server_Decrypt_LC_to_C(char* dst, char* src, char* key, int len, int Crypto_Flag);
 void Server_add_Client_to_UIDC(char DB_UIDC[DB_Range][HASH_DIGEST_BYTE], char* Client_Name, char* Clt_num);
@@ -130,8 +154,8 @@ int	char_compare(char* src1, char* src2, int len);
 
 void Initialize_Time_Server(_TIME_SERVER_* Time_Server);
 DWORD WINAPI Initialize_Time_Server_min(void* data);
-void Client_generates_K_C_TagC(_CLIENT_* Client);
-void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server);
-void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
-void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
+void Client_generates_K_C_TagC(_CLIENT_* Client, _FILE_ELEMENT_* File);
+void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEMENT_* File);
+void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, _FILE_ELEMENT_* File);
+void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, _FILE_ELEMENT_* File);
 void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
