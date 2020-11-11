@@ -18,11 +18,12 @@ int main()
 	_SERVER_ Server = { 0x00, };
 	_FILE_ELEMENT_ File = { 0x00, };
 	int cnt_i = 0, cnt_j = 0, cnt_k = 0;
-	pfc.random(P); // P generation 
+	pfc.random(P); // P generat2ion 
 
 	printf("**********************[Time Server Start]*************************\n");
 	Initialize_Time_Server(&Time_Server);
 	//HANDLE thread = CreateThread(NULL, 0, Initialize_Time_Server_min, NULL, 0, NULL); //Time_Server Start
+
 
 
 	for (cnt_i = 0; cnt_i < 4; cnt_i++)
@@ -32,18 +33,22 @@ int main()
 		printf("*************[Client Generates Key, C, TagC from File]************\n");
 		Client_generates_K_C_TagC(&Client, &File);
 
-		/*printf("current user %d \n", (&File)->current_client);
-		Print_char((&File)->Client_Tag[(&File)->current_client], HASH_DIGEST_BYTE);*/
-
 
 		printf("*************[Client Checks if TagC is in Server]*****************\n");
 		Client_check_to_Server_TacC(&Client, &Server, &File);
+
+		if ((&Client)->DB_Flag == BAD)
+		{
+			printf("*************[Client_check_to_Server_TacC Fail]********************\n");
+			printf("*************[End System]*************\n");
+			return 0;
+		}
 
 		if ((&Client)->DB_Flag == TRUE)
 		{
 			printf("*************[Server add Client into UIDC]********************\n");
 			printf("*************[End System]*************\n");
-			continue ;
+			continue;
 		}
 
 		printf("*************[Client Generates H(t), R, LC, sd]*******************\n");
@@ -66,7 +71,6 @@ int main()
 		//	WaitForSingleObject(thread, INFINITE);
 		//}*/
 	}
-
 
 		printf("*************[ All processes were executed normally ]*************\n");
 		printf("**************************[End System]****************************\n");

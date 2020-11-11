@@ -21,7 +21,7 @@
 
 #define AES_SECURITY 128
 #define AES_KEY_LEN 16
-#define CLIENT_FILE_LEN 40
+#define CLIENT_FILE_LEN 38
 #define CLIENT_FILE_LEN_PADDING ((16-(CLIENT_FILE_LEN%16)) + CLIENT_FILE_LEN)
 #define HASH_DIGEST_BYTE 32
 #define EXTRACT_RANDOMLEN 32
@@ -34,8 +34,9 @@
 
 #define Client_Name_Len 20
 #define DB_Range 10
-#define TRUE 1
-#define FALSE 0
+#define TRUE 0
+#define FALSE 1
+#define BAD 2
 
 #define AES 1
 #define LEA 2
@@ -49,6 +50,9 @@
 #define CLIENT_NUMBER 5
 #define FILENAME_LEN 10
 
+#define IPAD 0x36
+#define OPAD 0x5c
+#define HMAC_BLOCKBYTE 64
 
 typedef struct __FILE_ELEMENT__ {
 	char name[CLIENT_NUMBER][Client_Name_Len];
@@ -159,3 +163,6 @@ void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEME
 void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, _FILE_ELEMENT_* File);
 void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, _FILE_ELEMENT_* File);
 void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
+
+
+void Hash_MAC(char* src, int src_len, char* key, int key_len, char* mac);

@@ -39,6 +39,39 @@ void Hash_Function_using_SHA_256(char* src, int src_len, char* digest)
 	//char test[] = "Crypto Optimization and Application Lab Avengers"; 
 }
 
+void Hash_MAC(char* src,int src_len, char* key,int key_len, char* mac)
+{
+	int cnt_i = 0x00;
+	char* K1 = NULL;
+	char* K2 = NULL;
+	char digest[HASH_DIGEST_BYTE] = { 0x00 };
+
+	K1 = (char*)calloc(key_len + src_len, sizeof(char));
+	K2 = (char*)calloc(key_len + HASH_DIGEST_BYTE, sizeof(char));
+
+	for (cnt_i = 0; cnt_i < key_len; cnt_i++)
+	{
+		K1[cnt_i] = key[cnt_i] ^ IPAD;
+		K2[cnt_i] = key[cnt_i] ^ OPAD;
+	}
+	for (cnt_i = key_len; cnt_i < key_len + src_len; cnt_i++)
+	{
+		K1[cnt_i] = src[cnt_i - key_len];
+	}
+
+	Hash_Function_using_SHA_256(K1, key_len + src_len, digest);
+
+	for (cnt_i = key_len; cnt_i < key_len + HASH_DIGEST_BYTE; cnt_i++)
+	{
+		K2[cnt_i] = digest[cnt_i - key_len];
+	}
+
+	Hash_Function_using_SHA_256(K2, key_len + HASH_DIGEST_BYTE, mac);
+
+	free(K1);
+	free(K2);
+}
+
 void Generating_key_using_fixed_digest(char* src, int src_len, char* digest)
 {
 	int cnt_i = 0;
@@ -286,6 +319,36 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEMENT_*
 			{
 				Client->DB_Flag = TRUE;
 				printf("Client_TagC in DB of SerVer\n\n");
+
+				printf("Start proof of ownership process\n");
+
+				big random = mirvar(0);
+				char key[HASH_DIGEST_BYTE] = { 0x00 };
+				char Client_result[HASH_DIGEST_BYTE] = { 0x00 };
+				char Server_result[HASH_DIGEST_BYTE] = { 0x00 };
+				bigbits(256, random);
+				big_to_bytes(HASH_DIGEST_BYTE, random, key, TRUE);
+
+				Print_char(File->Ct_Client_File[File->current_client], CLIENT_FILE_LEN_PADDING);
+				Print_char(Server->DB_Ct_Client_File[cnt_i], CLIENT_FILE_LEN_PADDING);
+
+				Hash_MAC(File->Ct_Client_File[File->current_client], CLIENT_FILE_LEN_PADDING, key, HASH_DIGEST_BYTE, Client_result);
+				Hash_MAC(Server->DB_Ct_Client_File[cnt_i], CLIENT_FILE_LEN_PADDING, key, HASH_DIGEST_BYTE, Server_result);
+				
+				Print_char(Client_result, HASH_DIGEST_BYTE);
+				Print_char(Server_result, HASH_DIGEST_BYTE);
+
+				for (cnt_k = 0; cnt_k < HASH_DIGEST_BYTE; cnt_k++)
+				{
+					if (Client_result[cnt_k] != Server_result[cnt_k])
+					{
+						Client->DB_Flag = BAD;
+						printf("Proof of ownership Fail\n");
+						return;
+					}
+				}
+				printf("Proof of ownership Complete\n");
+
 				Server_add_Client_to_UIDC(Server->DB_UIDC, File->name[File->current_client], &((Server)->Client_Numeber));
 
 				file_pointer = fopen("Server_DB.txt", "a");
@@ -417,7 +480,7 @@ void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
 
 void Client_Read_File(_CLIENT_* Client, _FILE_ELEMENT_* File)
 {
-
+	int temp;
 	FILE* file_pointer;
 	char User_name[Client_Name_Len];
 	char fileName[FILENAME_LEN];
@@ -428,7 +491,7 @@ void Client_Read_File(_CLIENT_* Client, _FILE_ELEMENT_* File)
 	Add_File_Client_Num(File, User_name);
 
 	system("dir");
-	getchar();
+	temp = getchar();
 
 	printf("Please Enter File Name : ");
 	fgets(fileName, sizeof(fileName), stdin);
