@@ -328,15 +328,9 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEMENT_*
 				char Server_result[HASH_DIGEST_BYTE] = { 0x00 };
 				bigbits(256, random);
 				big_to_bytes(HASH_DIGEST_BYTE, random, key, TRUE);
-
-				Print_char(File->Ct_Client_File[File->current_client], CLIENT_FILE_LEN_PADDING);
-				Print_char(Server->DB_Ct_Client_File[cnt_i], CLIENT_FILE_LEN_PADDING);
-
+			
 				Hash_MAC(File->Ct_Client_File[File->current_client], CLIENT_FILE_LEN_PADDING, key, HASH_DIGEST_BYTE, Client_result);
 				Hash_MAC(Server->DB_Ct_Client_File[cnt_i], CLIENT_FILE_LEN_PADDING, key, HASH_DIGEST_BYTE, Server_result);
-				
-				Print_char(Client_result, HASH_DIGEST_BYTE);
-				Print_char(Server_result, HASH_DIGEST_BYTE);
 
 				for (cnt_k = 0; cnt_k < HASH_DIGEST_BYTE; cnt_k++)
 				{
@@ -577,4 +571,9 @@ int	char_compare(char* src1, char* src2, int len)
 	}
 
 	return TRUE;
+}
+
+int64_t cpucycles(void)
+{
+	return __rdtsc( ); 
 }

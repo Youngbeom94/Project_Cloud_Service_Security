@@ -11,6 +11,7 @@
 #include "miracl.h"
 #include "big.h"
 #include "ecn.h"
+#include <intrin.h>
 
 #define MR_PAIRING_BN    // AES-128 or AES-192 security
 #include "pairing_3.h"
@@ -21,7 +22,7 @@
 
 #define AES_SECURITY 128
 #define AES_KEY_LEN 16
-#define CLIENT_FILE_LEN 38
+#define CLIENT_FILE_LEN 100
 #define CLIENT_FILE_LEN_PADDING ((16-(CLIENT_FILE_LEN%16)) + CLIENT_FILE_LEN)
 #define HASH_DIGEST_BYTE 32
 #define EXTRACT_RANDOMLEN 32
@@ -37,6 +38,7 @@
 #define TRUE 0
 #define FALSE 1
 #define BAD 2
+#define NOT_YET 3
 
 #define AES 1
 #define LEA 2
@@ -49,7 +51,6 @@
 
 #define CLIENT_NUMBER 5
 #define FILENAME_LEN 10
-
 #define IPAD 0x36
 #define OPAD 0x5c
 #define HMAC_BLOCKBYTE 64
@@ -155,6 +156,7 @@ void Server_add_Client_to_UIDC(char DB_UIDC[DB_Range][HASH_DIGEST_BYTE], char* C
 void Server_LC_Decryption_using_AES_128_CBC(char* src, int src_len, char* dst, char* key);
 void Server_Tag_Verification(char* src1, char* src2,int len ,char* tag_flag);
 int	char_compare(char* src1, char* src2, int len);
+int64_t cpucycles(void);
 
 void Initialize_Time_Server(_TIME_SERVER_* Time_Server);
 DWORD WINAPI Initialize_Time_Server_min(void* data);
@@ -163,6 +165,4 @@ void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEME
 void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, _FILE_ELEMENT_* File);
 void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, _FILE_ELEMENT_* File);
 void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
-
-
 void Hash_MAC(char* src, int src_len, char* key, int key_len, char* mac);

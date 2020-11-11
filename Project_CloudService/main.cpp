@@ -17,11 +17,17 @@ int main()
 	_CLIENT_ Client = { 0x00, };
 	_SERVER_ Server = { 0x00, };
 	_FILE_ELEMENT_ File = { 0x00, };
+	unsigned long long cycles1, cycles2;
+
 	int cnt_i = 0, cnt_j = 0, cnt_k = 0;
 	pfc.random(P); // P generat2ion 
 
 	printf("**********************[Time Server Start]*************************\n");
+
+	cycles1 = cpucycles();
 	Initialize_Time_Server(&Time_Server);
+	cycles2 = cpucycles();
+//	printf("Initialize_Time_Server's clock cycle is %10lld\n", cycles2 - cycles1);
 	//HANDLE thread = CreateThread(NULL, 0, Initialize_Time_Server_min, NULL, 0, NULL); //Time_Server Start
 
 
@@ -31,11 +37,18 @@ int main()
 		printf("**********************[Client Run system]*************************\n");
 
 		printf("*************[Client Generates Key, C, TagC from File]************\n");
+		cycles1 = cpucycles();
 		Client_generates_K_C_TagC(&Client, &File);
+		cycles2 = cpucycles();
+	//	printf("Client_generates_K_C_TagC's clock cycle is %10lld\n", cycles2 - cycles1);
 
 
 		printf("*************[Client Checks if TagC is in Server]*****************\n");
+
+		cycles1 = cpucycles();
 		Client_check_to_Server_TacC(&Client, &Server, &File);
+		cycles2 = cpucycles();
+	//	printf("Client_check_to_Server_TacC's clock cycle is %10lld\n", cycles2 - cycles1);
 
 		if ((&Client)->DB_Flag == BAD)
 		{
@@ -52,11 +65,24 @@ int main()
 		}
 
 		printf("*************[Client Generates H(t), R, LC, sd]*******************\n");
+		cycles1 = cpucycles();
 		Client_Generates_ht_R_LC_sd(&Client, &Server, &Time_Server, &File);
+		cycles2 = cpucycles();
+	//	printf("Client_Generates_ht_R_LC_sd's clock cycle is %10lld\n", cycles2 - cycles1);
 
 		printf("*************[Server Verfiy TagC]*********************************\n");
+		cycles1 = cpucycles();
 		Server_Verifiy_TagC(&Client, &Server, &Time_Server, &File);
+		cycles2 = cpucycles();
+	//	printf("Server_Verifiy_TagC's  clock cycle is %10lld\n", cycles2 - cycles1);
 		//Server_Verifiy_TagC_min(&Client, &Server, &Time_Server);
+
+		if ((&Server)->Tag_Flag == NOT_YET)
+		{
+			printf("*************[Server not add file to DB ]**************\n"); 
+			printf("*************[End System]*************\n");
+			continue;
+		}
 
 
 		if ((&Server)->Tag_Flag == FALSE)
@@ -71,7 +97,6 @@ int main()
 		//	WaitForSingleObject(thread, INFINITE);
 		//}*/
 	}
-
 		printf("*************[ All processes were executed normally ]*************\n");
 		printf("**************************[End System]****************************\n");
 	
@@ -297,12 +322,20 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 			if (cnt_i == TIME_SERVER_BUFF)
 			{
 				printf("Server Can't found Ts of Current day\n");
+				(Server)->Tag_Flag = NOT_YET;
 				break;
 			}
 			continue; // if time_buff is not same to current time, then continue loof
 		}
 
 	}
+
+	if ((Server)->Tag_Flag == NOT_YET)
+	{
+		printf("Time_Server has not yet printed  Ts = sH(t) for the specified date.\n");
+		return;
+	}
+
 	point1_x = Big(big_point1_x);
 	point1_y = Big(big_point1_y);
 	point2_x = Big(big_point2_x);
