@@ -9,7 +9,6 @@ PFC pfc(AES_SECURITY);  // initialise pairing-friendly curve
 int len = 0x00;
 _TIME_SERVER_ Time_Server = { 0x00, };
 G1 P;
-
 //*****************************************************[Start]************************************************************
 
 int main()
@@ -54,7 +53,7 @@ int main()
 		{
 			printf("*************[Client_check_to_Server_TacC Fail]********************\n");
 			printf("*************[End System]*************\n");
-			return 0;
+			continue ;
 		}
 
 		if ((&Client)->DB_Flag == TRUE)
@@ -83,7 +82,6 @@ int main()
 			printf("*************[End System]*************\n");
 			continue;
 		}
-
 
 		if ((&Server)->Tag_Flag == FALSE)
 		{
@@ -282,22 +280,19 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 	*/
 
 	int cnt_i = 0;
-	char current_time[TIME_LEN] = { 0x00 };
+	char Client_Set_TIme[TIME_LEN] = { 0x00 };
 	char time_buff[TIME_LEN] = { 0x00 };
 	ZZn2 G2_P1, G2_P2;
 	Big point1_x = { 0x00 }, point1_y = { 0x00 }, point2_x = { 0x00 }, point2_y = { 0x00 };
 	big big_point1_x = mirvar(0), big_point1_y = mirvar(0), big_point2_x = mirvar(0), big_point2_y = mirvar(0);
 	FILE* file_pointer;
 
-	struct tm* t;
-	time_t timer;
-	timer = time(NULL);
-	t = localtime(&timer); // add strcuture using localtime
-	sprintf(current_time, "%04d%02d%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
+	Copy_char(Client_Set_TIme,Server->t,TIME_LEN);
 
 	file_pointer = fopen("Time_Server.txt", "r");
 	printf("Connect to Time_Server.....\n");
-	for (cnt_i = 0; cnt_i <= TIME_SERVER_BUFF + 10; cnt_i++)
+
+	for (cnt_i = 0; cnt_i < TIME_SERVER_BUFF + TIME_SERVER_BUFF; cnt_i++)
 	{
 		fgetc(file_pointer); //read '['
 		fgets(time_buff, 9, file_pointer); //read "yyyymmdd"
@@ -313,21 +308,23 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 
 		fgetc(file_pointer); //read '\n'
 
-		if (char_compare(current_time, time_buff, TIME_LEN) == TRUE)
+		if (char_compare(Client_Set_TIme, time_buff, TIME_LEN) == TRUE)
 		{
 			break; //get current Ts from Time_Server 
 		}
 		else
 		{
-			if (cnt_i == TIME_SERVER_BUFF)
-			{
-				printf("Server Can't found Ts of Current day\n");
-				(Server)->Tag_Flag = NOT_YET;
-				break;
-			}
 			continue; // if time_buff is not same to current time, then continue loof
 		}
+	}
 
+	if (cnt_i == (TIME_SERVER_BUFF + TIME_SERVER_BUFF))
+	{
+		printf("Server Can't found Ts of Current day\n");
+		printf("Time_Server has not yet printed  Ts = sH(t) for the specified date.\n");
+		(Server)->Tag_Flag = NOT_YET;
+		return;
+		//break;
 	}
 
 	if ((Server)->Tag_Flag == NOT_YET)
@@ -386,7 +383,7 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 	Copy_char((Server)->DB_TagC[Server->File_NUM], (Server)->DBL_TagC, HASH_DIGEST_BYTE);
 	Copy_char((Server)->DB_Ct_Client_File[Server->File_NUM], (Server)->DBL_C_decrypted_by_LC, CLIENT_FILE_LEN_PADDING);
 	//Write TagC, Cipher, and DB_UIDC  data to File
-	Server_Write_File(Server);
+	//Server_Write_File(Server);
 }
 
 

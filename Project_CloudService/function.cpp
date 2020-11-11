@@ -1,6 +1,5 @@
 #include "header.h"
 
-
 void Print_char(char* src, int len)
 {
 	for (int cnt_i = 0; cnt_i < len; cnt_i++)
@@ -340,6 +339,13 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEMENT_*
 						printf("Proof of ownership Fail\n");
 						return;
 					}
+				}
+				if (Server->test_Flag == FALSE)
+				{
+				Client->DB_Flag = BAD;
+				printf("Proof of ownership Fail\n");
+				Server->test_Flag = TRUE;
+				return;
 				}
 				printf("Proof of ownership Complete\n");
 

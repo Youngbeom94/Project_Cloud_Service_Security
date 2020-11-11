@@ -22,19 +22,24 @@
 
 #define AES_SECURITY 128
 #define AES_KEY_LEN 16
+#define CLIENT_NUMBER 5
+#define Client_Name_Len 20
 #define CLIENT_FILE_LEN 100
 #define CLIENT_FILE_LEN_PADDING ((16-(CLIENT_FILE_LEN%16)) + CLIENT_FILE_LEN)
+#define FILENAME_LEN 10
 #define HASH_DIGEST_BYTE 32
 #define EXTRACT_RANDOMLEN 32
 #define BNCURVE_POINTLEN 32
 #define PT_LEN 16
+#define DB_Range 10
 #define TIME_SERVER_BUFF 10
 #define TIME_SERVER_BUFF_SERVER 60
 //#define TIME_LEN 15 // if test version, it should be 15
 #define TIME_LEN 9 // if it's not test version, it should be 9
+#define IPAD 0x36
+#define OPAD 0x5c
+#define HMAC_BLOCKBYTE 64
 
-#define Client_Name_Len 20
-#define DB_Range 10
 #define TRUE 0
 #define FALSE 1
 #define BAD 2
@@ -49,11 +54,7 @@
 #define SHA_512 2 
 #define SHA_3	3
 
-#define CLIENT_NUMBER 5
-#define FILENAME_LEN 10
-#define IPAD 0x36
-#define OPAD 0x5c
-#define HMAC_BLOCKBYTE 64
+#define OWNERSHIP_TEST_FLAG FALSE
 
 typedef struct __FILE_ELEMENT__ {
 	char name[CLIENT_NUMBER][Client_Name_Len];
@@ -116,6 +117,7 @@ typedef struct __SERVER_STRUCTURE__ {
 	char Tag_Flag = -1;
 	int Crypto_Flag = -1;
 	int Hashing_Flag = -1;
+	int test_Flag = TRUE;
 
 	GT sd;
 	Big rs;
