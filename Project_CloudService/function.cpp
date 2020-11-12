@@ -38,7 +38,7 @@ void Hash_Function_using_SHA_256(char* src, int src_len, char* digest)
 	//char test[] = "Crypto Optimization and Application Lab Avengers"; 
 }
 
-void Hash_MAC(char* src,int src_len, char* key,int key_len, char* mac)
+void Hash_MAC(char* src, int src_len, char* key, int key_len, char* mac)
 {
 	int cnt_i = 0x00;
 	char* K1 = NULL;
@@ -89,7 +89,7 @@ void XOR_two_char_using_CBC(char* src, char* dst, int len)
 		dst[cnt_i] ^= src[cnt_i];
 	}
 }
-void Client_Encrypte_File(char* dst, char* src, char* key,int len, int Crypto_Flag)
+void Client_Encrypte_File(char* dst, char* src, char* key, int len, int Crypto_Flag)
 {
 	switch (Crypto_Flag)
 	{
@@ -132,7 +132,7 @@ void Client_Encrypte_C_to_LC(char* dst, char* src, char* key, int len, int Crypt
 	}
 }
 
-void Client_Hashing_File(char* dst, char* src, int len,int Hashing_Flag)
+void Client_Hashing_File(char* dst, char* src, int len, int Hashing_Flag)
 {
 	switch (Hashing_Flag)
 	{
@@ -167,7 +167,8 @@ void Server_Hashing_File_to_Tag(char* dst, char* src, int len, int Hashing_Flag)
 		break;
 
 	default:
-		printf("Encrypt File Error\n");
+		Hash_Function_using_SHA_256(src, len, dst);
+		break;
 	}
 }
 
@@ -176,7 +177,7 @@ void Server_Decrypt_LC_to_C(char* dst, char* src, char* key, int len, int Crypto
 	switch (Crypto_Flag)
 	{
 	case AES:
-		Server_LC_Decryption_using_AES_128_CBC(src, len,dst, key);
+		Server_LC_Decryption_using_AES_128_CBC(src, len, dst, key);
 		break;
 
 	case LEA:
@@ -300,78 +301,62 @@ void Client_Encryption_LC_using_AES_128_CBC(char* src, int src_len, char* dst, c
 
 }
 
-void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, _FILE_ELEMENT_* File)
+void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, int* current_client)
 {
 	int cnt_i = 0x00, cnt_j = 0x00, cnt_k = 0x00;
 	FILE* file_pointer;
 
-	for (cnt_i = 0; cnt_i < DB_Range; cnt_i++)
+	for (cnt_i = 0; cnt_i < MAX_DB; cnt_i++)
 	{
 		for (cnt_j = 0; cnt_j < HASH_DIGEST_BYTE; cnt_j++)
 		{
-			if (File->Client_Tag[File->current_client][cnt_j] != Server->DB_TagC[cnt_i][cnt_j])
+			if (Client[*current_client].File[Client[*current_client].current_file].Client_Tag[cnt_j] != Server->DB[cnt_i].DB_TagC[cnt_j])
 			{
 				break;
 			}
 
 			if (cnt_j == (HASH_DIGEST_BYTE - 1))
 			{
-				Client->DB_Flag = TRUE;
-				printf("Client_TagC in DB of SerVer\n\n");
-
+				printf("Client_TagC in DB of SerVer\n");
 				printf("Start proof of ownership process\n");
-
 				big random = mirvar(0);
 				char key[HASH_DIGEST_BYTE] = { 0x00 };
 				char Client_result[HASH_DIGEST_BYTE] = { 0x00 };
 				char Server_result[HASH_DIGEST_BYTE] = { 0x00 };
 				bigbits(256, random);
 				big_to_bytes(HASH_DIGEST_BYTE, random, key, TRUE);
-			
-				Hash_MAC(File->Ct_Client_File[File->current_client], CLIENT_FILE_LEN_PADDING, key, HASH_DIGEST_BYTE, Client_result);
-				Hash_MAC(Server->DB_Ct_Client_File[cnt_i], CLIENT_FILE_LEN_PADDING, key, HASH_DIGEST_BYTE, Server_result);
+
+				Hash_MAC(Client[*current_client].File[Client[*current_client].current_file].Ct_Client_File, CLIENT_FILE_LEN_PADDING, key, HASH_DIGEST_BYTE, Client_result);
+				Hash_MAC(Server->DB[cnt_i].DB_Ct_Client_File, CLIENT_FILE_LEN_PADDING, key, HASH_DIGEST_BYTE, Server_result);
 
 				for (cnt_k = 0; cnt_k < HASH_DIGEST_BYTE; cnt_k++)
 				{
 					if (Client_result[cnt_k] != Server_result[cnt_k])
 					{
-						Client->DB_Flag = BAD;
+						Server->DB_Flag = BAD;
 						printf("Proof of ownership Fail\n");
 						return;
 					}
 				}
 				if (Server->test_Flag == FALSE)
 				{
-				Client->DB_Flag = BAD;
-				printf("Proof of ownership Fail\n");
-				Server->test_Flag = TRUE;
-				return;
+					Server->DB_Flag = BAD;
+					printf("Proof of ownership Fail\n");
+					Server->test_Flag = TRUE;
+					return;
 				}
+
 				printf("Proof of ownership Complete\n");
-
-				Server_add_Client_to_UIDC(Server->DB_UIDC, File->name[File->current_client], &((Server)->Client_Numeber));
-
-				file_pointer = fopen("Server_DB.txt", "a");
-
-				fprintf(file_pointer, "\n\n[File : %d]\n", cnt_i);
-
-				fputs("[UIDC]\n", file_pointer);
-				Hash_Function_using_SHA_256(File->name[File->current_client], Client_Name_Len, File->name[File->current_client]);
-				for (cnt_k = 0; cnt_k < HASH_DIGEST_BYTE; cnt_k++)
-				{
-					fprintf(file_pointer, "%02X ", (unsigned char)File->name[File->current_client][cnt_k]);
-				}
-				fclose(file_pointer);
+				Hash_Function_using_SHA_256(Client[*current_client].name, Client_Name_Len, Server->DB[cnt_i].DB_UIDC[Server->DB[cnt_i].UIDC_NUM]);
+				Server->DB[cnt_i].UIDC_NUM = Server->DB[cnt_i].UIDC_NUM + 1;
+				Server->DB_Flag = TRUE;;
 				return;
 			}
 		}
 	}
-	Client->DB_Flag = FALSE;
-	Server->Client_Numeber ++;
+	Server->DB_Flag = FALSE;
 	printf("Client receive N/A of TagC from Server\n\n");
-
 }
-
 
 
 void Server_LC_Decryption_using_AES_128_CBC(char* src, int src_len, char* dst, char* key)
@@ -421,37 +406,22 @@ void Server_LC_Decryption_using_AES_128_CBC(char* src, int src_len, char* dst, c
 	aes_end(pt_a);
 }
 
-void Server_add_Client_to_UIDC(char DB_UIDC[DB_Range][HASH_DIGEST_BYTE], char* Client_Name, char* Clt_num)
+void Server_add_Client_to_UIDC(char* dst, char* src)
 {
 	int cnt_i, cnt_j = 0;
 	int temp = 0;
 	sha256 psh = { {0x00}, };
 	sha256* pt_psh = &psh;
 
-
 	//! SHA init
 	shs256_init(pt_psh);
 
 	for (cnt_i = 0; cnt_i < Client_Name_Len; cnt_i++)
 	{
-		shs256_process(pt_psh, Client_Name[cnt_i]);
+		shs256_process(pt_psh, src[cnt_i]);
 	}
 
-	for (cnt_i = 0; cnt_i < Client_Name_Len; cnt_i++)
-	{
-		for (cnt_j = 0; cnt_j < HASH_DIGEST_BYTE; cnt_j++)
-		{
-			if (DB_UIDC[cnt_i][cnt_j] != 0x00)
-			{
-				break;
-			}
-			temp = cnt_i;
-			break;
-		}
-	}
-	shs256_hash(pt_psh, DB_UIDC[temp]);
-	*Clt_num = temp;
-
+	shs256_hash(pt_psh, dst);
 }
 
 void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
@@ -478,7 +448,7 @@ void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
 
 }
 
-void Client_Read_File(_CLIENT_* Client, _FILE_ELEMENT_* File)
+void Client_Read_File(_CLIENT_* Client, int* current_client)
 {
 	int temp;
 	FILE* file_pointer;
@@ -488,7 +458,7 @@ void Client_Read_File(_CLIENT_* Client, _FILE_ELEMENT_* File)
 
 	printf("Please Enter User Name : ");
 	scanf_s("%s", User_name, sizeof(User_name));
-	Add_File_Client_Num(File, User_name);
+	Add_File_Client_Num(Client, User_name, current_client);
 
 	system("dir");
 	temp = getchar();
@@ -502,65 +472,91 @@ void Client_Read_File(_CLIENT_* Client, _FILE_ELEMENT_* File)
 
 	fgets(from_a_txt, CLIENT_FILE_LEN, file_pointer);
 
-	Copy_char(File->Pt_Client_File[(File)->current_client], from_a_txt, CLIENT_FILE_LEN);
+	Client[*current_client].current_file++;
+	Copy_char(Client[*current_client].File[Client[*current_client].current_file].file_name, fileName, FILENAME_LEN);
+	Copy_char(Client[*current_client].File[Client[*current_client].current_file].Pt_Client_File, from_a_txt, CLIENT_FILE_LEN);
+
+	//printf("current_user %d\n", *current_client);
+	//printf("current_File name \n");
+	//Print_char(Client[*current_client].File[Client[*current_client].current_file].file_name, FILENAME_LEN);
+	//printf("current_File %d\n", Client[*current_client].current_file);
+	//printf("current_File data \n");
+	//Print_char(Client[*current_client].File[Client[*current_client].current_file].Pt_Client_File, CLIENT_FILE_LEN);
 
 	fclose(file_pointer);
 }
 
-void Add_File_Client_Num(_FILE_ELEMENT_* File, char* name)
+void Add_File_Client_Num(_CLIENT_* Client, char* name, int* current_client)
 {
 	int cnt_i = 0x00, cnt_j = 0x00, cnt_k = 0x00;
 	//Print_char(name, Client_Name_Len);
-	for (cnt_i = 0; cnt_i < CLIENT_NUMBER; cnt_i++)
+	for (cnt_i = 0; cnt_i < MAX_CLIENT; cnt_i++)
 	{
 		for (cnt_j = 0; cnt_j < Client_Name_Len; cnt_j++)
 		{
-			if ((((File)->name[cnt_i][cnt_j]) != name[cnt_j]))
+			if (Client[cnt_i].name[cnt_j] != name[cnt_j])
 			{
 				break;
 			}
 
 			if (cnt_j == (Client_Name_Len - 1))
 			{
-				File->current_client = cnt_i;
+				*current_client = cnt_i;
 				printf("Client aleady Access\n");
-				return ;
+				return;
 			}
 		}
 	}
-	File->client_buff = File->client_buff++;
-	File->current_client = File->client_buff;
+
+	*current_client = *current_client + 1;
 	for (cnt_i = 0; cnt_i < Client_Name_Len; cnt_i++)
 	{
-		(File)->name[File->current_client][cnt_i] = name[cnt_i];
+		Client[*current_client].name[cnt_i] = name[cnt_i];
 	}
-
+	return;
 }
+
 void Server_Write_File(_SERVER_* Server)
 {
-	int cnt_i = 0;
+	int cnt_i, cnt_j,cnt_k = 0;
 	FILE* file_pointer;
-	file_pointer = fopen("Server_DB.txt", "a");
+	file_pointer = fopen("Server_DB.txt", "w");
 
-	fprintf(file_pointer, "\n\n[File : %d]\n", Server->File_NUM);
-	fputs("[UIDC]\n", file_pointer);
-	for (cnt_i = 0; cnt_i < HASH_DIGEST_BYTE; cnt_i++)
+	for (cnt_i = 0; cnt_i < Server->range_DB; cnt_i++)
 	{
-		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_UIDC[Server->Client_Numeber][cnt_i]);
-	}
+		fprintf(file_pointer, "\n[File : %s]\n", Server->DB[cnt_i].DB_file_name);
 
-	fputs("\n[TagC]\n", file_pointer);
-	for (cnt_i = 0; cnt_i < HASH_DIGEST_BYTE; cnt_i++)
-	{
-		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_TagC[Server->File_NUM][cnt_i]);
-	}
+		fputs("---UIDC---\n", file_pointer);
+		for (cnt_j = 0; cnt_j < Server->DB[cnt_i].UIDC_NUM ; cnt_j++)
+		{
+			for (cnt_k = 0; cnt_k < HASH_DIGEST_BYTE; cnt_k++)
+			{
+				fprintf(file_pointer, "%02X ", (unsigned char)Server->DB[cnt_i].DB_UIDC[cnt_j][cnt_k]);
+			}
+			fputs("\n", file_pointer);
+		}
 
-	fputs("\n[Encrypted Client File]\n", file_pointer);
-	for (cnt_i = 0; cnt_i < CLIENT_FILE_LEN_PADDING; cnt_i++)
-	{
-		fprintf(file_pointer, "%02X ", (unsigned char)Server->DB_Ct_Client_File[Server->File_NUM][cnt_i]);
+		fputs("--TagC--\n", file_pointer);
+		for (cnt_j = 0; cnt_j < HASH_DIGEST_BYTE; cnt_j++)
+		{
+			fprintf(file_pointer, "%02X ", (unsigned char)Server->DB[cnt_i].DB_TagC[cnt_j]);
+		}
+			fputs("\n", file_pointer);
+
+		fputs("--Encrypted Client File--\n", file_pointer);
+		for (cnt_j = 0; cnt_j < CLIENT_FILE_LEN_PADDING; cnt_j++)
+		{
+			fprintf(file_pointer, "%02X ", (unsigned char)Server->DB[cnt_i].DB_Ct_Client_File[cnt_j]);
+		}
+			fputs("\n", file_pointer);
 	}
-	Server->File_NUM++;
+		
+	
+
+
+
+	
+
 	fclose(file_pointer);
 }
 
@@ -581,5 +577,5 @@ int	char_compare(char* src1, char* src2, int len)
 
 int64_t cpucycles(void)
 {
-	return __rdtsc( ); 
+	return __rdtsc();
 }
