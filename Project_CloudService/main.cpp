@@ -21,6 +21,7 @@ int main()
 	int cnt_i = 0, cnt_j = 0, cnt_k = 0;
 	pfc.random(P); // P generat2ion 
 
+
 	printf("**********************[Time Server Start]*************************\n");
 
 	cycles1 = cpucycles();
@@ -28,7 +29,6 @@ int main()
 	cycles2 = cpucycles();
 	printf("Initialize_Time_Server's clock cycle is %10lld\n", cycles2 - cycles1);
 	//HANDLE thread = CreateThread(NULL, 0, Initialize_Time_Server_min, NULL, 0, NULL); //Time_Server Start
-
 
 
 	for (cnt_i = 0; cnt_i < 4; cnt_i++)
@@ -39,7 +39,7 @@ int main()
 		cycles1 = cpucycles();
 		Client_generates_K_C_TagC(Client, &current_client);
 		cycles2 = cpucycles();
-		//printf("Client_generates_K_C_TagC's clock cycle is %10lld\n", cycles2 - cycles1);
+		printf("Client_generates_K_C_TagC's clock cycle is %10lld\n", cycles2 - cycles1);
 
 
 		printf("*************[Client Checks if TagC is in Server]*****************\n");
@@ -47,7 +47,7 @@ int main()
 		cycles1 = cpucycles();
 		Client_check_to_Server_TacC(Client, &Server, &current_client);
 		cycles2 = cpucycles();
-		//printf("Client_check_to_Server_TacC's clock cycle is %10lld\n", cycles2 - cycles1);
+		printf("Client_check_to_Server_TacC's clock cycle is %10lld\n", cycles2 - cycles1);
 	
 		if (Server.DB_Flag == BAD)
 		{
@@ -67,13 +67,13 @@ int main()
 		cycles1 = cpucycles();
 		Client_Generates_ht_R_LC_sd(Client, &Server, &Time_Server, &current_client);
 		cycles2 = cpucycles();
-		//printf("Client_Generates_ht_R_LC_sd's clock cycle is %10lld\n", cycles2 - cycles1);
+		printf("Client_Generates_ht_R_LC_sd's clock cycle is %10lld\n", cycles2 - cycles1);
 
 		printf("*************[Server Verfiy TagC]*********************************\n");
 		cycles1 = cpucycles();
 		Server_Verifiy_TagC(Client, &Server, &Time_Server, &current_client);
 		cycles2 = cpucycles();
-		//printf("Server_Verifiy_TagC's  clock cycle is %10lld\n", cycles2 - cycles1);
+		printf("Server_Verifiy_TagC's  clock cycle is %10lld\n", cycles2 - cycles1);
 
 
 		if ((&Server)->Tag_Flag == NOT_YET)
@@ -290,6 +290,7 @@ void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time
 	big big_point1_x = mirvar(0), big_point1_y = mirvar(0), big_point2_x = mirvar(0), big_point2_y = mirvar(0);
 	FILE* file_pointer;
 
+	
 	Copy_char(Client_Set_TIme,Server->DBL[Server->current_DBL].t, TIME_LEN);
 	file_pointer = fopen("Time_Server.txt", "r");
 	printf("Connect to Time_Server.....\n");

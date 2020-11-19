@@ -32,18 +32,6 @@
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\MIRACL-master\source\mraes.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MIRACL-master\source\mrshs256.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MIRACL-master\source\mrshs.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MIRACL-master\source\mrstrong.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\MIRACL-master\source\curve\pairing\zzn2.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -69,12 +57,6 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="function.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MIRACL-master\source\mrarth1.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MIRACL-master\source\mrio2.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

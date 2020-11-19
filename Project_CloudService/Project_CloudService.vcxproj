@@ -88,7 +88,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\YoungBeom\source\repos\MIRACL-master\source\curve\pairing;C:\Users\YoungBeom\source\repos\MIRACL-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
+      <Optimization>Full</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
@@ -122,7 +122,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\YoungBeom\source\repos\MIRACL-master\source\curve\pairing;C:\Users\YoungBeom\source\repos\MIRACL-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
+      <Optimization>Full</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -160,12 +160,6 @@
     <ClCompile Include="..\..\MIRACL-master\source\curve\pairing\zzn2.cpp" />
     <ClCompile Include="..\..\MIRACL-master\source\curve\pairing\zzn4.cpp" />
     <ClCompile Include="..\..\MIRACL-master\source\ecn.cpp" />
-    <ClCompile Include="..\..\MIRACL-master\source\mraes.c" />
-    <ClCompile Include="..\..\MIRACL-master\source\mrarth1.c" />
-    <ClCompile Include="..\..\MIRACL-master\source\mrio2.c" />
-    <ClCompile Include="..\..\MIRACL-master\source\mrshs.c" />
-    <ClCompile Include="..\..\MIRACL-master\source\mrshs256.c" />
-    <ClCompile Include="..\..\MIRACL-master\source\mrstrong.c" />
     <ClCompile Include="..\..\MIRACL-master\source\zzn.cpp" />
     <ClCompile Include="function.cpp" />
     <ClCompile Include="main.cpp" />

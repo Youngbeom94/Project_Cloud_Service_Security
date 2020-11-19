@@ -319,6 +319,7 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, int* current_cl
 			{
 				printf("Client_TagC in DB of SerVer\n");
 				printf("Start proof of ownership process\n");
+
 				big random = mirvar(0);
 				char key[HASH_DIGEST_BYTE] = { 0x00 };
 				char Client_result[HASH_DIGEST_BYTE] = { 0x00 };
@@ -338,11 +339,12 @@ void Client_Check_TagC_in_DB(_CLIENT_* Client, _SERVER_* Server, int* current_cl
 						return;
 					}
 				}
-				if (Server->test_Flag == FALSE)
+
+				if (Server->test_Flag == TRUE)
 				{
 					Server->DB_Flag = BAD;
 					printf("Proof of ownership Fail\n");
-					Server->test_Flag = TRUE;
+					Server->test_Flag = FALSE;
 					return;
 				}
 
@@ -427,7 +429,8 @@ void Server_add_Client_to_UIDC(char* dst, char* src)
 void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
 {
 	int cnt_i = 0x00;
-
+	
+	
 	for (cnt_i = 0; cnt_i < len; cnt_i++)
 	{
 		if (src1[cnt_i] != src2[cnt_i])
@@ -437,6 +440,7 @@ void Server_Tag_Verification(char* src1, char* src2, int len, char* tag_flag)
 		}
 
 	}
+
 	if (*tag_flag == FALSE)
 	{
 		printf("------Server Tag Verification Fail------\n\n");
@@ -518,7 +522,7 @@ void Add_File_Client_Num(_CLIENT_* Client, char* name, int* current_client)
 
 void Server_Write_File(_SERVER_* Server)
 {
-	int cnt_i, cnt_j,cnt_k = 0;
+	int cnt_i = 0, cnt_j = 0,cnt_k = 0;
 	FILE* file_pointer;
 	file_pointer = fopen("Server_DB.txt", "w");
 
@@ -529,6 +533,7 @@ void Server_Write_File(_SERVER_* Server)
 		fputs("---UIDC---\n", file_pointer);
 		for (cnt_j = 0; cnt_j < Server->DB[cnt_i].UIDC_NUM ; cnt_j++)
 		{
+			fprintf(file_pointer, "-%d :  ", cnt_j);
 			for (cnt_k = 0; cnt_k < HASH_DIGEST_BYTE; cnt_k++)
 			{
 				fprintf(file_pointer, "%02X ", (unsigned char)Server->DB[cnt_i].DB_UIDC[cnt_j][cnt_k]);
@@ -550,7 +555,24 @@ void Server_Write_File(_SERVER_* Server)
 		}
 			fputs("\n", file_pointer);
 	}
-		
+
+	fprintf(file_pointer, "\n[Black-List]\n");
+	if (Server->BLACK_LIST.range_black_list == 0)
+	{
+		fputs("--There is no Black-List--\n", file_pointer);
+	}
+	else
+	{
+		for (cnt_i = 0; cnt_i < Server->BLACK_LIST.range_black_list; cnt_i++)
+		{
+			fprintf(file_pointer, "--%d :  ",cnt_i);
+			for (cnt_j = 0; cnt_j < HASH_DIGEST_BYTE; cnt_j++)
+			{
+				fprintf(file_pointer, "%02X ", (unsigned char)Server->BLACK_LIST.name[cnt_i][cnt_j]);
+			}
+			fputs("\n", file_pointer);
+		}
+	}
 	
 
 

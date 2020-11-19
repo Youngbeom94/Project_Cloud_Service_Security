@@ -94,35 +94,35 @@ int brent(int id,char * fred,int base)
 unsigned int __stdcall first(LPVOID lpvx)
 { // factors in Hex!
     Miracl precision(50,0);
-    brent(1,"1111111111111111111111111111111111",16);
+ 
     return 0;
 }
 
 unsigned int __stdcall second(LPVOID lpvx)
 { // factors in decimal!
     Miracl precision(500,10);
-    brent(2,"100000000000000000000000000000000013",10);  // find factors
+
     return 0;
 }
-
-int main()
-{
-    HANDLE thread1,thread2;
-    unsigned int ID1,ID2;
-
-    mr_init_threading();   // initialize MIRACL for multi-threading
-
-    thread1=(HANDLE)_beginthreadex(NULL,0,first,(LPVOID)NULL,0,&ID1);
-    thread2=(HANDLE)_beginthreadex(NULL,0,second,(LPVOID)NULL,0,&ID2);
-
-    WaitForSingleObject(thread1,INFINITE);   // wait for threads to finish
-    WaitForSingleObject(thread2,INFINITE);
-
-    CloseHandle(thread1);
-    CloseHandle(thread2);
-
-    mr_end_threading();
-   
-    return 0;
-}
-
+//
+//int main()
+//{
+//    HANDLE thread1,thread2;
+//    unsigned int ID1,ID2;
+//
+//    mr_init_threading();   // initialize MIRACL for multi-threading
+//
+//    thread1=(HANDLE)_beginthreadex(NULL,0,first,(LPVOID)NULL,0,&ID1);
+//    thread2=(HANDLE)_beginthreadex(NULL,0,second,(LPVOID)NULL,0,&ID2);
+//
+//    WaitForSingleObject(thread1,INFINITE);   // wait for threads to finish
+//    WaitForSingleObject(thread2,INFINITE);
+//
+//    CloseHandle(thread1);
+//    CloseHandle(thread2);
+//
+//    mr_end_threading();
+//   
+//    return 0;
+//}
+//

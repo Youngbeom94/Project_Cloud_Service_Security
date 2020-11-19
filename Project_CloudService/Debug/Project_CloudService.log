@@ -1,6 +1,15 @@
-﻿  main.cpp
-C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\header.h(46,1): warning C4005: 'TRUE': 매크로 재정의
+﻿  function.cpp
+C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\header.h(43,1): warning C4005: 'TRUE': 매크로 재정의
 C:\Users\YoungBeom\source\repos\MIRACL-master\include\miracl.h(214): message : 'TRUE'의 이전 정의를 참조하십시오.
-C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\header.h(47,1): warning C4005: 'FALSE': 매크로 재정의
+C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\header.h(44,1): warning C4005: 'FALSE': 매크로 재정의
 C:\Users\YoungBeom\source\repos\MIRACL-master\include\miracl.h(217): message : 'FALSE'의 이전 정의를 참조하십시오.
+C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\function.cpp(307,8): warning C4101: 'file_pointer' :참조되지 않은 지역 변수입니다.
+  main.cpp
+C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\header.h(43,1): warning C4005: 'TRUE': 매크로 재정의
+C:\Users\YoungBeom\source\repos\MIRACL-master\include\miracl.h(214): message : 'TRUE'의 이전 정의를 참조하십시오.
+C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\header.h(44,1): warning C4005: 'FALSE': 매크로 재정의
+C:\Users\YoungBeom\source\repos\MIRACL-master\include\miracl.h(217): message : 'FALSE'의 이전 정의를 참조하십시오.
+C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\main.cpp(19,21): warning C4101: 'cycles1' :참조되지 않은 지역 변수입니다.
+C:\Users\YoungBeom\source\repos\Project_CloudService\Project_CloudService\main.cpp(19,30): warning C4101: 'cycles2' :참조되지 않은 지역 변수입니다.
+  코드를 생성하고 있습니다...
   Project_CloudService.vcxproj -> C:\Users\YoungBeom\source\repos\Project_CloudService\Debug\Project_CloudService.exe

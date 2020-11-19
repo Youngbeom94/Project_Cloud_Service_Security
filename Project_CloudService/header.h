@@ -19,7 +19,6 @@
 #include <process.h>
 #include <Windows.h>
 
-
 #define AES_SECURITY 128
 #define AES_KEY_LEN 16
 #define CLIENT_NUMBER 5
@@ -36,9 +35,7 @@
 #define MAX_CLIENT 5
 #define MAX_DB 5
 #define TIME_SERVER_BUFF 10
-#define TIME_SERVER_BUFF_SERVER 60
-//#define TIME_LEN 15 // if test version, it should be 15
-#define TIME_LEN 9 // if it's not test version, it should be 9
+#define TIME_LEN 9 
 #define IPAD 0x36
 #define OPAD 0x5c
 #define HMAC_BLOCKBYTE 64
@@ -59,21 +56,6 @@
 
 #define OWNERSHIP_TEST_FLAG FALSE
 
-//typedef struct __FILE_ELEMENT__ {
-//	char name[CLIENT_NUMBER][Client_Name_Len];
-//	char Pt_Client_File[CLIENT_NUMBER][CLIENT_FILE_LEN];
-//	char Ct_Client_File[CLIENT_NUMBER][CLIENT_FILE_LEN_PADDING] = { 0x00, };
-//	char Ct_LC_File[CLIENT_NUMBER][CLIENT_FILE_LEN_PADDING] = { 0x00, };
-//	char Client_File_key[CLIENT_NUMBER][AES_KEY_LEN] = { 0x00 };
-//	char Client_Tag[CLIENT_NUMBER][HASH_DIGEST_BYTE] = { 0x00 };
-//
-//	char t[CLIENT_NUMBER][TIME_LEN] = {0x00}; // General case : check day
-//	int client_buff = -1;
-//	int current_client = -1;
-//	char Time_Flag = TRUE; //Time server authentication passed in all cases 
-//	char DB_Flag = -1;
-//
-//}_FILE_ELEMENT_;
 
 typedef struct __FILE_ELEMENT__ {
 	char file_name[FILENAME_LEN];
@@ -83,14 +65,10 @@ typedef struct __FILE_ELEMENT__ {
 	char Ct_LC_File[CLIENT_FILE_LEN_PADDING] = { 0x00, };
 	char Client_File_key[AES_KEY_LEN] = { 0x00 };
 	char Client_Tag[HASH_DIGEST_BYTE] = { 0x00 };
-
-
 }_FILE_ELEMENT_;
 
 typedef struct __CLIENT_STRUCTURE__ {
 	char name[Client_Name_Len];
-	int File_NUM = 0; //?
-
 	int Crypto_Flag = -1;
 	int Hashing_Flag = -1;
 	int current_file = -1;
@@ -163,16 +141,15 @@ typedef struct __TIME_SERVER_STRUCTURE__ {
 
 }_TIME_SERVER_;
 
-void Client_Read_File(_CLIENT_* Client, int* current_client);
-void Add_File_Client_Num(_CLIENT_* Client, char* name, int* current_client);
-void Server_Write_File(_SERVER_* Server);
-
 
 void Print_char(char* src, int len);
 void Copy_char(char* dst, char* src, int len);
 void Hash_Function_using_SHA_256(char* src, int src_len, char* digest);
 void Generating_key_using_fixed_digest(char* dst, int src_len, char* digest);
 void XOR_two_char_using_CBC(char* src, char* dst, int len);
+void Client_Read_File(_CLIENT_* Client, int* current_client);
+void Add_File_Client_Num(_CLIENT_* Client, char* name, int* current_client);
+void Server_Write_File(_SERVER_* Server);
 void Client_Encrypte_File(char* dst, char* src, char* key, int len, int Crypto_Flag);
 void Client_Encrypte_C_to_LC(char* dst, char* src, char* key, int len, int Crypto_Flag);
 void Client_Hashing_File(char* dst, char* src, int len, int Hashing_Flag);
@@ -191,7 +168,10 @@ void Initialize_Time_Server(_TIME_SERVER_* Time_Server);
 void Client_generates_K_C_TagC(_CLIENT_* Client, int* current_client);
 void Client_check_to_Server_TacC(_CLIENT_* Client, _SERVER_* Server, int* current_client);
 void Client_Generates_ht_R_LC_sd(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, int* current_client);
+
 void Server_Verifiy_TagC(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server, int* current_client);
-//DWORD WINAPI Initialize_Time_Server_min(void* data);
-//void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
 void Hash_MAC(char* src, int src_len, char* key, int key_len, char* mac);
+
+
+//void Server_Verifiy_TagC_min(_CLIENT_* Client, _SERVER_* Server, _TIME_SERVER_* Time_Server);
+//DWORD WINAPI Initialize_Time_Server_min(void* data);
